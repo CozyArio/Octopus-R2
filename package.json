@@ -1,6 +1,6 @@
 {
   "name": "octopus-r2",
-  "version": "0.2.9",
+  "version": "0.3.0",
   "description": "Private game tools suite for a friend group",
   "author": "CozyArio",
   "main": "out/main/index.js",
@@ -10,6 +10,7 @@
     "dist:win": "npm run build && electron-builder --win nsis",
     "dist:portable": "npm run build && electron-builder --win portable",
     "dist:publish": "npm run build && electron-builder --win nsis portable -p always",
+    "release:local": "powershell -ExecutionPolicy Bypass -File scripts/release-local.ps1",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.json"
   },

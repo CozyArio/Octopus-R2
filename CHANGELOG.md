@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0 - 2026-03-20
+- Switched release automation to a local CLI flow (`npm run release:local`) to avoid GitHub Actions approvals.
+- Added `scripts/release-local.ps1` to push branch/tag and publish updater assets in one command.
+- Removed GitHub Actions auto-release workflow.
+
 ## 0.2.9 - 2026-03-20
 - Added new `Discord` tab with join prompt and one-click invite open flow.
 - Added safe external URL opening IPC channel for approved hosts (Discord/GitHub).
