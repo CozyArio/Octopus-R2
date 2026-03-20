@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.3 - 2026-03-20
+- Added new `Themes` tab with full custom theme manager.
+- Users can create, save, apply, remove, import, export, and share theme JSON.
+- Startup now applies active custom theme automatically across launches.
+
 ## 0.3.2 - 2026-03-20
 - Library now uses Website Catalog as primary flow; removed Single URL and Batch URL import sections.
 - Added automatic website scan in Library with configurable scan delay from Settings.

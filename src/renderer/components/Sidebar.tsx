@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Library, Puzzle, Settings, Wrench, UserCircle2, Sparkles, MessageCircle } from 'lucide-react'
+import { Library, Puzzle, Settings, Wrench, UserCircle2, Sparkles, MessageCircle, Palette } from 'lucide-react'
 import { CHANNELS } from '../../shared/ipc-channels'
 import type { Settings as AppSettings } from '../../shared/types'
 
@@ -14,6 +14,7 @@ const navItems: NavItem[] = [
   { to: '/library', label: 'Library', icon: <Library size={18} /> },
   { to: '/dlc', label: 'DLC Manager', icon: <Puzzle size={18} /> },
   { to: '/updates', label: 'Updates', icon: <Sparkles size={18} /> },
+  { to: '/themes', label: 'Themes', icon: <Palette size={18} /> },
   { to: '/discord', label: 'Discord', icon: <MessageCircle size={18} /> }
 ]
 

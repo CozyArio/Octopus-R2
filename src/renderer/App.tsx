@@ -3,12 +3,14 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { Sparkles } from 'lucide-react'
 import { CHANNELS } from '../shared/ipc-channels'
 import type { Settings } from '../shared/types'
+import { applyThemeVars, clearThemeVars, getActiveThemeId, readThemes } from './utils/theme-manager'
 import Sidebar from './components/Sidebar'
 import LibraryPage from './pages/LibraryPage'
 import DLCPage from './pages/DLCPage'
 import SettingsPage from './pages/SettingsPage'
 import UpdatesPage from './pages/UpdatesPage'
 import DiscordPage from './pages/DiscordPage'
+import ThemesPage from './pages/ThemesPage'
 
 const flavourClassNames = [
   'ctp-mocha',
@@ -53,6 +55,15 @@ export default function App(): JSX.Element {
       body.classList.remove(...flavourClassNames)
       html.classList.add(`ctp-${flavour}`)
       body.classList.add(`ctp-${flavour}`)
+      clearThemeVars()
+
+      const activeThemeId = getActiveThemeId()
+      if (activeThemeId) {
+        const custom = readThemes().find((item) => item.id === activeThemeId)
+        if (custom) {
+          applyThemeVars(custom.vars)
+        }
+      }
     }
 
     const loadSettingsTheme = async (): Promise<void> => {
@@ -108,6 +119,7 @@ export default function App(): JSX.Element {
             <Route path="/library" element={<LibraryPage />} />
             <Route path="/dlc" element={<DLCPage />} />
             <Route path="/updates" element={<UpdatesPage />} />
+            <Route path="/themes" element={<ThemesPage />} />
             <Route path="/discord" element={<DiscordPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>

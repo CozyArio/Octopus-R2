@@ -20,6 +20,17 @@ export default function LibraryPage(): JSX.Element {
   }, [])
 
   useEffect(() => {
+    const handler = (event: Event): void => {
+      const customEvent = event as CustomEvent<Settings>
+      if (customEvent.detail?.catalogScanMinutes) {
+        setCatalogScanMinutes(customEvent.detail.catalogScanMinutes)
+      }
+    }
+    window.addEventListener('octopus:settings-updated', handler as EventListener)
+    return () => window.removeEventListener('octopus:settings-updated', handler as EventListener)
+  }, [])
+
+  useEffect(() => {
     if (catalogScanMinutes <= 0) return
     const timer = window.setInterval(() => {
       void loadWebsiteCatalog(true)
