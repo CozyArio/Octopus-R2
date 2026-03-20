@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.5 - 2026-03-20
+- Fixed update check priority: app now compares both GitHub Releases and `main/package.json`, then picks the newest version.
+- Prevents false "up to date" when release tags are behind the repository version.
+
 ## 0.2.4 - 2026-03-20
 - Improved Library UX with live search, installed-only filter, and visible-game counters.
 - Added quick action to add all currently visible games to SteamTools in one click.

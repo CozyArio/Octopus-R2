@@ -413,61 +413,70 @@ async function checkGithubUpdate(repo: string): Promise<UpdateInfoPayload> {
     }
   }
 
-  const releaseApiUrl = `https://api.github.com/repos/${trimmedRepo}/releases/latest`
-  const response = await fetch(releaseApiUrl, {
-    headers: { Accept: 'application/vnd.github+json' }
-  })
+  let releaseVersion: string | null = null
+  let releaseNotes = ''
+  let releaseUrl = `https://github.com/${trimmedRepo}/releases/latest`
 
-  if (response.ok) {
-    const data = (await response.json()) as {
-      tag_name?: string
-      body?: string
-      html_url?: string
-      name?: string
+  try {
+    const releaseApiUrl = `https://api.github.com/repos/${trimmedRepo}/releases/latest`
+    const response = await fetch(releaseApiUrl, {
+      headers: { Accept: 'application/vnd.github+json' }
+    })
+
+    if (response.ok) {
+      const data = (await response.json()) as {
+        tag_name?: string
+        body?: string
+        html_url?: string
+        name?: string
+      }
+      releaseVersion = (data.tag_name || data.name || '').replace(/^v/i, '') || null
+      releaseNotes = data.body || ''
+      releaseUrl = data.html_url || releaseUrl
     }
-
-    const latestVersion = (data.tag_name || data.name || currentVersion).replace(/^v/i, '')
-    const notes = data.body || 'No changelog provided.'
-    const releaseUrl = data.html_url || `https://github.com/${trimmedRepo}/releases/latest`
-
-    return {
-      updateAvailable: isVersionNewer(latestVersion, currentVersion),
-      currentVersion,
-      latestVersion,
-      notes,
-      releaseUrl,
-      canAutoUpdate: false
-    }
+  } catch {
+    // Ignore release API failures and continue with package fallback source.
   }
 
-  // Fallback: if releases are missing/private, compare repo package.json on main branch.
-  const packageUrl = `https://raw.githubusercontent.com/${trimmedRepo}/main/package.json`
-  const packageRes = await fetch(packageUrl)
-  if (!packageRes.ok) {
-    return {
-      updateAvailable: false,
-      currentVersion,
-      latestVersion: currentVersion,
-      notes: `Unable to fetch releases (${response.status}) and package fallback (${packageRes.status}).`,
-      releaseUrl: `https://github.com/${trimmedRepo}`,
-      canAutoUpdate: false
+  let packageVersion: string | null = null
+  let packageNotes = ''
+  try {
+    const packageUrl = `https://raw.githubusercontent.com/${trimmedRepo}/main/package.json`
+    const packageRes = await fetch(packageUrl)
+    if (packageRes.ok) {
+      const pkg = (await packageRes.json()) as { version?: string }
+      packageVersion = String(pkg.version ?? '').trim() || null
     }
+
+    const changelogUrl = `https://raw.githubusercontent.com/${trimmedRepo}/main/CHANGELOG.md`
+    const changelogRes = await fetch(changelogUrl)
+    if (changelogRes.ok) {
+      packageNotes = (await changelogRes.text()).slice(0, 4000)
+    }
+  } catch {
+    // Ignore package/changelog failures and use whatever source is available.
   }
 
-  const pkg = (await packageRes.json()) as { version?: string }
-  const latestVersion = String(pkg.version ?? currentVersion)
-  const changelogUrl = `https://raw.githubusercontent.com/${trimmedRepo}/main/CHANGELOG.md`
-  const changelogRes = await fetch(changelogUrl)
-  const notes = changelogRes.ok
-    ? (await changelogRes.text()).slice(0, 4000)
-    : 'Fallback update check active. No CHANGELOG.md found on main branch.'
+  const releaseIsNewerThanPackage =
+    !!releaseVersion && (!packageVersion || isVersionNewer(releaseVersion, packageVersion))
+  const chosenVersion = releaseIsNewerThanPackage
+    ? releaseVersion!
+    : (packageVersion ?? releaseVersion ?? currentVersion)
+
+  const chosenNotes = releaseIsNewerThanPackage
+    ? (releaseNotes || 'No changelog provided.')
+    : (packageNotes || releaseNotes || 'No changelog provided.')
+
+  const chosenUrl = releaseIsNewerThanPackage
+    ? releaseUrl
+    : `https://github.com/${trimmedRepo}/commits/main`
 
   return {
-    updateAvailable: isVersionNewer(latestVersion, currentVersion),
+    updateAvailable: isVersionNewer(chosenVersion, currentVersion),
     currentVersion,
-    latestVersion,
-    notes,
-    releaseUrl: `https://github.com/${trimmedRepo}/commits/main`,
+    latestVersion: chosenVersion,
+    notes: chosenNotes,
+    releaseUrl: chosenUrl,
     canAutoUpdate: false
   }
 }
