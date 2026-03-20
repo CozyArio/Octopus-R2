@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.6 - 2026-03-20
+- Unified updater UX with a single `Update Now` button (no more confusing `Open GitHub` wording).
+- Top update banner now also uses `Update Now` for consistency.
+
 ## 0.2.5 - 2026-03-20
 - Fixed update check priority: app now compares both GitHub Releases and `main/package.json`, then picks the newest version.
 - Prevents false "up to date" when release tags are behind the repository version.

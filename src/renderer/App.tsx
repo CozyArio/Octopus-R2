@@ -46,7 +46,7 @@ export default function App(): JSX.Element {
               <p className="text-ctp-subtext1">Current {updateNotice.currentVersion}</p>
             </div>
             <button onClick={() => openUpdater()} className="btn-primary text-xs px-3 py-1.5">
-              Open Updater
+              Update Now
             </button>
             <button onClick={() => setUpdateNotice(null)} className="btn-secondary text-xs px-3 py-1.5">
               Dismiss

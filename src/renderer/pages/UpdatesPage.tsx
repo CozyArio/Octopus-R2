@@ -105,6 +105,21 @@ export default function UpdatesPage(): JSX.Element {
     }
   }
 
+  const updateNow = async (): Promise<void> => {
+    if (!info.updateAvailable) return
+
+    if (info.canAutoUpdate) {
+      if (info.downloaded) {
+        await installUpdate()
+        return
+      }
+      await downloadUpdate()
+      return
+    }
+
+    await openRelease()
+  }
+
   const loadLocalChangelog = async (): Promise<void> => {
     const result = await window.octopus.invoke<{ markdown: string }>(CHANNELS.APP_GET_CHANGELOG)
     if (!result.success) {
@@ -180,38 +195,23 @@ export default function UpdatesPage(): JSX.Element {
               <p className="panel-title">{tab === 'release' ? 'Release Notes' : 'Local Changelog'}</p>
             </div>
             <div className="flex items-center gap-2">
-              {info.canAutoUpdate ? (
-                info.downloaded ? (
-                  <button onClick={() => void installUpdate()} className="btn-primary">
-                    <Rocket size={14} />
-                    Install & Restart
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => void downloadUpdate()}
-                    disabled={!info.updateAvailable || isDownloading}
-                    className={[
-                      'btn-primary',
-                      !info.updateAvailable || isDownloading ? 'opacity-60 cursor-not-allowed hover:translate-y-0' : ''
-                    ].join(' ')}
-                  >
-                    <DownloadCloud size={14} />
-                    {isDownloading ? 'Downloading...' : 'Download Update'}
-                  </button>
-                )
-              ) : (
-                <button
-                  onClick={() => void openRelease()}
-                  disabled={!info.releaseUrl}
-                  className={[
-                    'btn-primary',
-                    !info.releaseUrl ? 'opacity-60 cursor-not-allowed hover:translate-y-0' : ''
-                  ].join(' ')}
-                >
-                  <DownloadCloud size={14} />
-                  Open GitHub
-                </button>
-              )}
+              <button
+                onClick={() => void updateNow()}
+                disabled={!info.updateAvailable || isDownloading}
+                className={[
+                  'btn-primary',
+                  !info.updateAvailable || isDownloading ? 'opacity-60 cursor-not-allowed hover:translate-y-0' : ''
+                ].join(' ')}
+              >
+                {info.canAutoUpdate && info.downloaded ? <Rocket size={14} /> : <DownloadCloud size={14} />}
+                {isDownloading
+                  ? 'Downloading...'
+                  : info.canAutoUpdate
+                    ? info.downloaded
+                      ? 'Update Now (Install)'
+                      : 'Update Now'
+                    : 'Update Now (GitHub)'}
+              </button>
             </div>
           </div>
           {isDownloading && (
