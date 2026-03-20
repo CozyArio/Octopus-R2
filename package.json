@@ -1,6 +1,6 @@
 {
   "name": "octopus-r2",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Private game tools suite for a friend group",
   "author": "CozyArio",
   "main": "out/main/index.js",
