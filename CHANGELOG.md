@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.4 - 2026-03-20
+- Improved Library UX with live search, installed-only filter, and visible-game counters.
+- Added quick action to add all currently visible games to SteamTools in one click.
+- Added staggered card motion and hover polish for a more modern feel.
+
 ## 0.2.3 - 2026-03-20
 - Added real in-app updater flow for packaged builds (check, download, progress, install/restart).
 - Added updater IPC actions: download update and install update.

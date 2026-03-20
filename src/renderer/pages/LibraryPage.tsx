@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Library, RefreshCw, FolderOpen, Download, Link2, Trash2, Upload } from 'lucide-react'
+import { Library, RefreshCw, FolderOpen, Download, Link2, Trash2, Upload, Search, Sparkles } from 'lucide-react'
 import { CHANNELS } from '../../shared/ipc-channels'
 import type { GameEntry } from '../../shared/types'
 
@@ -11,12 +11,26 @@ export default function LibraryPage(): JSX.Element {
   const [statusMessage, setStatusMessage] = useState('Ready.')
   const [downloadUrl, setDownloadUrl] = useState(defaultManifestUrl)
   const [batchUrls, setBatchUrls] = useState(`${defaultManifestUrl}\n`)
+  const [search, setSearch] = useState('')
+  const [onlyInstalled, setOnlyInstalled] = useState(false)
 
   useEffect(() => {
     void loadGames()
   }, [])
 
   const installedCount = useMemo(() => games.filter((game) => game.installed).length, [games])
+  const visibleGames = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    return games.filter((game) => {
+      if (onlyInstalled && !game.installed) return false
+      if (!query) return true
+      return (
+        game.name.toLowerCase().includes(query) ||
+        game.appId.toLowerCase().includes(query) ||
+        game.luaPath.toLowerCase().includes(query)
+      )
+    })
+  }, [games, onlyInstalled, search])
 
   const loadGames = async (): Promise<void> => {
     const result = await window.octopus.invoke<GameEntry[]>(CHANNELS.STEAM_GAMES)
@@ -111,6 +125,23 @@ export default function LibraryPage(): JSX.Element {
     setStatusMessage(`Added to SteamTools: ${result.data.targetDir}`)
   }
 
+  const addVisibleToSteamTools = async (): Promise<void> => {
+    if (visibleGames.length === 0) {
+      setStatusMessage('No visible games to add.')
+      return
+    }
+
+    let success = 0
+    for (const game of visibleGames) {
+      const result = await window.octopus.invoke<{ copied: number; targetDir: string }>(CHANNELS.STEAM_ADD_TOOLS, {
+        appId: game.appId
+      })
+      if (result.success) success += 1
+    }
+
+    setStatusMessage(`Added ${success}/${visibleGames.length} visible games to SteamTools.`)
+  }
+
   return (
     <div className="flex flex-col h-full bg-ctp-base page-shell">
       <header className="flex items-center justify-between px-6 py-4 border-b border-ctp-surface1/70 shrink-0 glass-panel">
@@ -143,9 +174,34 @@ export default function LibraryPage(): JSX.Element {
       <div className="flex items-center justify-between gap-3 px-6 py-3 border-b border-ctp-surface1/50 shrink-0 glass-panel">
         <div className="flex items-center gap-3">
           <Chip label={`${games.length} games`} />
+          <Chip label={`${visibleGames.length} visible`} />
           <Chip label={`${installedCount} installed`} color="green" />
         </div>
         <p className="text-xs text-ctp-subtext1">{statusMessage}</p>
+      </div>
+
+      <div className="px-6 py-3 border-b border-ctp-surface1/50 shrink-0">
+        <div className="glass-panel rounded-2xl p-3 flex flex-col md:flex-row md:items-center gap-2">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ctp-subtext1" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by game name, AppID, or path"
+              className="input-base w-full pl-9"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setOnlyInstalled((v) => !v)} className="btn-secondary">
+              {onlyInstalled ? 'Show All' : 'Installed Only'}
+            </button>
+            <button onClick={() => void addVisibleToSteamTools()} className="btn-accent">
+              <Sparkles size={13} />
+              Add Visible to SteamTools
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr] gap-3 px-6 py-3 border-b border-ctp-surface1/50 shrink-0">
@@ -190,15 +246,15 @@ export default function LibraryPage(): JSX.Element {
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        {games.length === 0 ? (
+        {visibleGames.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center gap-4 text-center px-8 animate-rise">
             <div className="w-16 h-16 rounded-2xl bg-ctp-surface0 flex items-center justify-center">
               <Library size={28} className="text-ctp-subtext0" />
             </div>
             <div>
-              <p className="text-ctp-text font-semibold text-sm">No games found</p>
+              <p className="text-ctp-text font-semibold text-sm">No matching games</p>
               <p className="text-ctp-subtext1 text-xs mt-1 max-w-xs leading-relaxed">
-                Use Download or Batch Import, then scan your library to check install status.
+                Try a different search/filter or import more manifests.
               </p>
             </div>
             <button
@@ -211,10 +267,11 @@ export default function LibraryPage(): JSX.Element {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {games.map((game) => (
+            {visibleGames.map((game, index) => (
               <article
                 key={game.appId}
-                className="rounded-2xl border border-ctp-surface1/80 bg-ctp-mantle/70 px-4 py-3 space-y-1.5 animate-rise hover:border-ctp-surface2 transition-colors"
+                className="rounded-2xl border border-ctp-surface1/80 bg-ctp-mantle/70 px-4 py-3 space-y-1.5 animate-rise hover:border-ctp-surface2 transition-all duration-200 hover:-translate-y-0.5"
+                style={{ animationDelay: `${Math.min(index * 40, 240)}ms` }}
               >
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-sm font-semibold text-ctp-text truncate">{game.name}</h2>
