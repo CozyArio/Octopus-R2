@@ -1,12 +1,27 @@
 import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Sparkles } from 'lucide-react'
+import { CHANNELS } from '../shared/ipc-channels'
+import type { Settings } from '../shared/types'
 import Sidebar from './components/Sidebar'
 import LibraryPage from './pages/LibraryPage'
 import DLCPage from './pages/DLCPage'
 import SettingsPage from './pages/SettingsPage'
 import UpdatesPage from './pages/UpdatesPage'
 import DiscordPage from './pages/DiscordPage'
+
+const flavourClassNames = [
+  'ctp-mocha',
+  'ctp-macchiato',
+  'ctp-frappe',
+  'ctp-latte',
+  'ctp-redline',
+  'ctp-transgender',
+  'ctp-cyberpunk',
+  'ctp-hellokitty',
+  'ctp-darkreaper',
+  'ctp-souless'
+]
 
 interface UpdateNotice {
   updateAvailable: boolean
@@ -28,6 +43,36 @@ export default function App(): JSX.Element {
       }
     })
     return () => unsub()
+  }, [])
+
+  useEffect(() => {
+    const applyTheme = (flavour: Settings['catppuccinFlavour']): void => {
+      const html = document.documentElement
+      const body = document.body
+      html.classList.remove(...flavourClassNames)
+      body.classList.remove(...flavourClassNames)
+      html.classList.add(`ctp-${flavour}`)
+      body.classList.add(`ctp-${flavour}`)
+    }
+
+    const loadSettingsTheme = async (): Promise<void> => {
+      const result = await window.octopus.invoke<Settings>(CHANNELS.SETTINGS_GET)
+      if (result.success) {
+        applyTheme(result.data.catppuccinFlavour)
+      }
+    }
+
+    void loadSettingsTheme()
+
+    const handler = (event: Event): void => {
+      const customEvent = event as CustomEvent<Settings>
+      if (customEvent.detail?.catppuccinFlavour) {
+        applyTheme(customEvent.detail.catppuccinFlavour)
+      }
+    }
+
+    window.addEventListener('octopus:settings-updated', handler as EventListener)
+    return () => window.removeEventListener('octopus:settings-updated', handler as EventListener)
   }, [])
 
   const openUpdater = (): void => {

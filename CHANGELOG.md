@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.2 - 2026-03-20
+- Library now uses Website Catalog as primary flow; removed Single URL and Batch URL import sections.
+- Added automatic website scan in Library with configurable scan delay from Settings.
+- Locked updates repo setting to prevent accidental updater breakage.
+- Added new themes: Transgender, Cyberpunk, Hello Kitty, Dark Reaper, Souless.
+- Fixed theme startup behavior so saved theme applies automatically on app launch.
+
 ## 0.3.1 - 2026-03-20
 - Update flow is now one-click for auto-updater builds: `Update Now` downloads and installs automatically.
 - DLC Manager now shows a clear "Work in progress" page instead of broken controls.

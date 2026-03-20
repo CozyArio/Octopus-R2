@@ -1,14 +1,26 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FolderOpen, Palette, Puzzle, UserCircle2, CheckCircle2, DownloadCloud } from 'lucide-react'
 import { CHANNELS } from '../../shared/ipc-channels'
 import type { Settings } from '../../shared/types'
 
-const flavourClassNames = ['ctp-mocha', 'ctp-macchiato', 'ctp-frappe', 'ctp-latte', 'ctp-redline']
+const flavourClassNames = [
+  'ctp-mocha',
+  'ctp-macchiato',
+  'ctp-frappe',
+  'ctp-latte',
+  'ctp-redline',
+  'ctp-transgender',
+  'ctp-cyberpunk',
+  'ctp-hellokitty',
+  'ctp-darkreaper',
+  'ctp-souless'
+]
 
 const defaultSettings: Settings = {
   steamPath: '',
   githubRepo: 'CozyArio/Octopus-R2',
   autoUpdateCheck: true,
+  catalogScanMinutes: 5,
   dlcTool: 'greenluma',
   nickname: '',
   catppuccinFlavour: 'mocha',
@@ -24,12 +36,15 @@ export default function SettingsPage(): JSX.Element {
     void loadSettings()
   }, [])
 
-  const saveDisabled = useMemo(() => !/^[^/]+\/[^/]+$/.test((settings.githubRepo || '').trim()), [settings.githubRepo])
+  const saveDisabled = false
 
   const applyFlavourClass = (flavour: Settings['catppuccinFlavour']): void => {
     const html = document.documentElement
+    const body = document.body
     html.classList.remove(...flavourClassNames)
+    body.classList.remove(...flavourClassNames)
     html.classList.add(`ctp-${flavour}`)
+    body.classList.add(`ctp-${flavour}`)
   }
 
   const loadAvatar = async (): Promise<void> => {
@@ -70,8 +85,8 @@ export default function SettingsPage(): JSX.Element {
   const saveSettings = async (): Promise<void> => {
     const payload: Partial<Settings> = {
       steamPath: settings.steamPath.trim(),
-      githubRepo: settings.githubRepo.trim(),
       autoUpdateCheck: settings.autoUpdateCheck,
+      catalogScanMinutes: settings.catalogScanMinutes,
       nickname: settings.nickname.trim(),
       dlcTool: settings.dlcTool,
       catppuccinFlavour: settings.catppuccinFlavour
@@ -187,7 +202,9 @@ export default function SettingsPage(): JSX.Element {
         <Section icon={<Palette size={15} />} title="Appearance">
           <Field label="Catppuccin Flavour" hint="Changes the colour palette">
             <div className="flex gap-2 flex-wrap">
-              {(['mocha', 'macchiato', 'frappe', 'latte', 'redline'] as const).map((flavour) => (
+              {(
+                ['mocha', 'macchiato', 'frappe', 'latte', 'redline', 'transgender', 'cyberpunk', 'hellokitty', 'darkreaper', 'souless'] as const
+              ).map((flavour) => (
                 <ToolChip
                   key={flavour}
                   label={flavour[0].toUpperCase() + flavour.slice(1)}
@@ -203,14 +220,32 @@ export default function SettingsPage(): JSX.Element {
         </Section>
 
         <Section icon={<DownloadCloud size={15} />} title="Updates">
-          <Field label="GitHub Repo" hint="owner/repo, used to check latest release">
+          <Field label="GitHub Repo" hint="Locked for safety so updates keep working">
             <input
               type="text"
               placeholder="owner/repo"
               value={settings.githubRepo || ''}
-              onChange={(e) => setSettings((current) => ({ ...current, githubRepo: e.target.value }))}
-              className="w-full bg-ctp-surface0 border border-ctp-surface1 rounded-lg px-3 py-2 text-sm text-ctp-text placeholder:text-ctp-subtext0 outline-none focus:border-ctp-mauve/60 transition-colors"
+              readOnly
+              className="w-full bg-ctp-surface0/70 border border-ctp-surface1 rounded-lg px-3 py-2 text-sm text-ctp-text/85 placeholder:text-ctp-subtext0 outline-none cursor-not-allowed"
             />
+          </Field>
+          <Field label="Website Catalog Scan Delay" hint="How often Library scans your website for newly added games">
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                max={60}
+                value={settings.catalogScanMinutes}
+                onChange={(e) =>
+                  setSettings((current) => ({
+                    ...current,
+                    catalogScanMinutes: Math.max(1, Math.min(60, Number(e.target.value || 5)))
+                  }))
+                }
+                className="w-28 bg-ctp-surface0 border border-ctp-surface1 rounded-lg px-3 py-2 text-sm text-ctp-text outline-none focus:border-ctp-mauve/60 transition-colors"
+              />
+              <span className="text-xs text-ctp-subtext1">minutes</span>
+            </div>
           </Field>
           <Field label="Auto Update Check" hint="Check for updates automatically on app startup">
             <button

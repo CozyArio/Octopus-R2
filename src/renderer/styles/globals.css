@@ -202,3 +202,148 @@ body,
   --ctp-mantle: 23, 15, 18;
   --ctp-crust: 16, 10, 13;
 }
+
+.ctp-transgender {
+  --ctp-rosewater: 255, 202, 232;
+  --ctp-flamingo: 255, 174, 218;
+  --ctp-pink: 255, 157, 212;
+  --ctp-mauve: 143, 214, 255;
+  --ctp-red: 255, 132, 178;
+  --ctp-maroon: 255, 118, 166;
+  --ctp-peach: 255, 188, 206;
+  --ctp-yellow: 255, 232, 189;
+  --ctp-green: 164, 236, 210;
+  --ctp-teal: 126, 224, 228;
+  --ctp-sky: 126, 214, 255;
+  --ctp-sapphire: 121, 197, 255;
+  --ctp-blue: 111, 180, 255;
+  --ctp-lavender: 202, 198, 255;
+  --ctp-text: 234, 241, 255;
+  --ctp-subtext1: 182, 193, 219;
+  --ctp-subtext0: 152, 165, 195;
+  --ctp-overlay2: 128, 140, 170;
+  --ctp-overlay1: 109, 120, 148;
+  --ctp-overlay0: 89, 98, 123;
+  --ctp-surface2: 72, 80, 103;
+  --ctp-surface1: 56, 63, 84;
+  --ctp-surface0: 42, 48, 67;
+  --ctp-base: 26, 30, 46;
+  --ctp-mantle: 21, 24, 38;
+  --ctp-crust: 16, 19, 31;
+}
+
+.ctp-cyberpunk {
+  --ctp-rosewater: 255, 165, 221;
+  --ctp-flamingo: 255, 118, 206;
+  --ctp-pink: 255, 89, 197;
+  --ctp-mauve: 225, 72, 255;
+  --ctp-red: 255, 84, 150;
+  --ctp-maroon: 255, 70, 130;
+  --ctp-peach: 255, 153, 87;
+  --ctp-yellow: 255, 230, 98;
+  --ctp-green: 137, 255, 170;
+  --ctp-teal: 56, 255, 220;
+  --ctp-sky: 33, 229, 255;
+  --ctp-sapphire: 20, 196, 255;
+  --ctp-blue: 36, 148, 255;
+  --ctp-lavender: 168, 135, 255;
+  --ctp-text: 235, 240, 255;
+  --ctp-subtext1: 183, 190, 219;
+  --ctp-subtext0: 152, 160, 195;
+  --ctp-overlay2: 124, 133, 166;
+  --ctp-overlay1: 102, 110, 142;
+  --ctp-overlay0: 83, 90, 120;
+  --ctp-surface2: 68, 73, 100;
+  --ctp-surface1: 53, 57, 81;
+  --ctp-surface0: 39, 42, 63;
+  --ctp-base: 22, 22, 39;
+  --ctp-mantle: 17, 17, 31;
+  --ctp-crust: 12, 12, 24;
+}
+
+.ctp-hellokitty {
+  --ctp-rosewater: 255, 228, 236;
+  --ctp-flamingo: 255, 198, 222;
+  --ctp-pink: 255, 176, 214;
+  --ctp-mauve: 255, 150, 208;
+  --ctp-red: 255, 128, 160;
+  --ctp-maroon: 246, 112, 148;
+  --ctp-peach: 255, 193, 152;
+  --ctp-yellow: 255, 238, 176;
+  --ctp-green: 176, 238, 184;
+  --ctp-teal: 149, 226, 209;
+  --ctp-sky: 157, 217, 255;
+  --ctp-sapphire: 130, 201, 255;
+  --ctp-blue: 116, 175, 255;
+  --ctp-lavender: 203, 192, 255;
+  --ctp-text: 248, 240, 247;
+  --ctp-subtext1: 220, 196, 216;
+  --ctp-subtext0: 191, 166, 188;
+  --ctp-overlay2: 162, 138, 161;
+  --ctp-overlay1: 140, 117, 138;
+  --ctp-overlay0: 117, 96, 115;
+  --ctp-surface2: 98, 79, 97;
+  --ctp-surface1: 78, 63, 78;
+  --ctp-surface0: 62, 49, 63;
+  --ctp-base: 41, 32, 43;
+  --ctp-mantle: 33, 25, 35;
+  --ctp-crust: 24, 18, 26;
+}
+
+.ctp-darkreaper {
+  --ctp-rosewater: 210, 182, 214;
+  --ctp-flamingo: 189, 153, 197;
+  --ctp-pink: 167, 126, 182;
+  --ctp-mauve: 143, 101, 170;
+  --ctp-red: 186, 83, 110;
+  --ctp-maroon: 159, 67, 95;
+  --ctp-peach: 177, 126, 97;
+  --ctp-yellow: 178, 160, 110;
+  --ctp-green: 124, 157, 129;
+  --ctp-teal: 104, 151, 150;
+  --ctp-sky: 100, 143, 171;
+  --ctp-sapphire: 90, 123, 161;
+  --ctp-blue: 86, 102, 173;
+  --ctp-lavender: 128, 121, 184;
+  --ctp-text: 214, 206, 226;
+  --ctp-subtext1: 162, 152, 182;
+  --ctp-subtext0: 134, 124, 158;
+  --ctp-overlay2: 111, 101, 134;
+  --ctp-overlay1: 91, 83, 112;
+  --ctp-overlay0: 73, 67, 91;
+  --ctp-surface2: 61, 55, 76;
+  --ctp-surface1: 48, 43, 61;
+  --ctp-surface0: 38, 34, 49;
+  --ctp-base: 24, 21, 34;
+  --ctp-mantle: 19, 17, 28;
+  --ctp-crust: 14, 12, 22;
+}
+
+.ctp-souless {
+  --ctp-rosewater: 181, 181, 193;
+  --ctp-flamingo: 162, 162, 176;
+  --ctp-pink: 149, 143, 168;
+  --ctp-mauve: 132, 124, 158;
+  --ctp-red: 163, 102, 122;
+  --ctp-maroon: 144, 89, 108;
+  --ctp-peach: 156, 121, 104;
+  --ctp-yellow: 161, 145, 110;
+  --ctp-green: 120, 142, 121;
+  --ctp-teal: 106, 141, 140;
+  --ctp-sky: 104, 131, 150;
+  --ctp-sapphire: 96, 119, 138;
+  --ctp-blue: 93, 107, 146;
+  --ctp-lavender: 121, 118, 156;
+  --ctp-text: 204, 202, 218;
+  --ctp-subtext1: 153, 150, 170;
+  --ctp-subtext0: 127, 124, 147;
+  --ctp-overlay2: 105, 103, 126;
+  --ctp-overlay1: 86, 84, 106;
+  --ctp-overlay0: 70, 68, 87;
+  --ctp-surface2: 57, 55, 74;
+  --ctp-surface1: 46, 44, 61;
+  --ctp-surface0: 35, 34, 48;
+  --ctp-base: 22, 21, 33;
+  --ctp-mantle: 18, 17, 28;
+  --ctp-crust: 13, 12, 22;
+}

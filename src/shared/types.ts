@@ -38,10 +38,21 @@ export interface Settings {
   steamPath: string
   githubRepo: string
   autoUpdateCheck: boolean
+  catalogScanMinutes: number
   dlcTool: 'greenluma' | 'creamapi'
   nickname: string
   avatarPath?: string
-  catppuccinFlavour: 'mocha' | 'macchiato' | 'frappe' | 'latte' | 'redline'
+  catppuccinFlavour:
+    | 'mocha'
+    | 'macchiato'
+    | 'frappe'
+    | 'latte'
+    | 'redline'
+    | 'transgender'
+    | 'cyberpunk'
+    | 'hellokitty'
+    | 'darkreaper'
+    | 'souless'
   isOwner: boolean
   ownerKeyHash?: string
 }

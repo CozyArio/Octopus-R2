@@ -1,26 +1,32 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Library, RefreshCw, FolderOpen, Download, Link2, Trash2, Upload, Search, Sparkles, Globe2, Plus } from 'lucide-react'
+import { Library, RefreshCw, FolderOpen, Download, Trash2, Upload, Search, Sparkles, Globe2, Plus } from 'lucide-react'
 import { CHANNELS } from '../../shared/ipc-channels'
-import type { GameEntry, WebCatalogGame } from '../../shared/types'
-
-const defaultManifestUrl =
-  'https://manifestkitkat.netlify.app/files/307690_Sleeping%20Dogs%20Definitive%20Edition.lua'
+import type { GameEntry, Settings, WebCatalogGame } from '../../shared/types'
 
 export default function LibraryPage(): JSX.Element {
   const [games, setGames] = useState<GameEntry[]>([])
   const [statusMessage, setStatusMessage] = useState('Ready.')
-  const [downloadUrl, setDownloadUrl] = useState(defaultManifestUrl)
-  const [batchUrls, setBatchUrls] = useState(`${defaultManifestUrl}\n`)
   const [search, setSearch] = useState('')
   const [onlyInstalled, setOnlyInstalled] = useState(false)
   const [catalogGames, setCatalogGames] = useState<WebCatalogGame[]>([])
   const [catalogSearch, setCatalogSearch] = useState('')
   const [catalogLoading, setCatalogLoading] = useState(false)
+  const [catalogScanMinutes, setCatalogScanMinutes] = useState(5)
 
   useEffect(() => {
     void loadGames()
     void loadWebsiteCatalog()
+    void loadScanSettings()
   }, [])
+
+  useEffect(() => {
+    if (catalogScanMinutes <= 0) return
+    const timer = window.setInterval(() => {
+      void loadWebsiteCatalog(true)
+    }, catalogScanMinutes * 60 * 1000)
+
+    return () => window.clearInterval(timer)
+  }, [catalogScanMinutes, catalogGames])
 
   const installedCount = useMemo(() => games.filter((game) => game.installed).length, [games])
   const visibleGames = useMemo(() => {
@@ -54,17 +60,35 @@ export default function LibraryPage(): JSX.Element {
     setGames(result.data)
   }
 
-  const loadWebsiteCatalog = async (): Promise<void> => {
+  const loadScanSettings = async (): Promise<void> => {
+    const result = await window.octopus.invoke<Settings>(CHANNELS.SETTINGS_GET)
+    if (result.success) {
+      setCatalogScanMinutes(result.data.catalogScanMinutes)
+    }
+  }
+
+  const loadWebsiteCatalog = async (silent = false): Promise<void> => {
+    const previousIds = new Set(catalogGames.map((item) => item.appId))
     setCatalogLoading(true)
     const result = await window.octopus.invoke<WebCatalogGame[]>(CHANNELS.STEAM_WEB_CATALOG)
     if (!result.success) {
       setCatalogLoading(false)
-      setStatusMessage(result.error)
+      if (!silent) {
+        setStatusMessage(result.error)
+      }
       return
     }
 
     setCatalogGames(result.data)
     setCatalogLoading(false)
+    if (silent) {
+      const newItems = result.data.filter((item) => !previousIds.has(item.appId)).length
+      if (newItems > 0) {
+        setStatusMessage(`Website scan found ${newItems} new game(s).`)
+      }
+    } else {
+      setStatusMessage(`Website catalog loaded (${result.data.length} games).`)
+    }
   }
 
   const importLuaFiles = async (): Promise<void> => {
@@ -87,44 +111,6 @@ export default function LibraryPage(): JSX.Element {
 
     setGames(result.data)
     setStatusMessage(`Scan complete. ${result.data.length} game(s) in library.`)
-  }
-
-  const downloadAndImportLua = async (): Promise<void> => {
-    const result = await window.octopus.invoke<{ games: GameEntry[]; imported: number }>(
-      CHANNELS.STEAM_DOWNLOAD_LUA,
-      { url: downloadUrl }
-    )
-    if (!result.success) {
-      setStatusMessage(result.error)
-      return
-    }
-
-    setGames(result.data.games)
-    setStatusMessage('Downloaded and imported manifest.')
-  }
-
-  const downloadAndImportBatch = async (): Promise<void> => {
-    const urls = batchUrls
-      .split(/\r?\n|,/)
-      .map((item) => item.trim())
-      .filter(Boolean)
-
-    if (urls.length === 0) {
-      setStatusMessage('Paste at least one URL for batch import.')
-      return
-    }
-
-    const result = await window.octopus.invoke<{ games: GameEntry[]; imported: number }>(
-      CHANNELS.STEAM_DOWNLOAD_LUA_BATCH,
-      { urls }
-    )
-    if (!result.success) {
-      setStatusMessage(result.error)
-      return
-    }
-
-    setGames(result.data.games)
-    setStatusMessage(`Batch complete: imported ${result.data.imported}/${urls.length} manifests.`)
   }
 
   const clearLibrary = async (): Promise<void> => {
@@ -243,7 +229,7 @@ export default function LibraryPage(): JSX.Element {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr_1fr] gap-3 px-6 py-3 border-b border-ctp-surface1/50 shrink-0">
+      <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-3 px-6 py-3 border-b border-ctp-surface1/50 shrink-0">
         <div className="glass-panel rounded-2xl p-4 space-y-3 animate-rise">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -255,6 +241,7 @@ export default function LibraryPage(): JSX.Element {
               {catalogLoading ? 'Loading...' : 'Refresh'}
             </button>
           </div>
+          <p className="text-[11px] text-ctp-subtext1">Auto scan every {catalogScanMinutes} minute(s).</p>
 
           <input
             type="text"
@@ -293,41 +280,15 @@ export default function LibraryPage(): JSX.Element {
           </div>
         </div>
 
-        <div className="glass-panel rounded-2xl p-4 space-y-2 animate-rise">
-          <p className="panel-title">Single URL Import</p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={downloadUrl}
-              onChange={(e) => setDownloadUrl(e.target.value)}
-              placeholder="Paste .lua URL from your site"
-              className="input-base flex-1"
-            />
-            <button
-              onClick={() => void downloadAndImportLua()}
-              className="btn-accent"
-            >
-              <Link2 size={13} />
-              Download
-            </button>
-          </div>
-        </div>
         <div className="glass-panel rounded-2xl p-4 space-y-2 animate-rise-delayed">
-          <p className="panel-title">Batch URL Import</p>
-          <textarea
-            value={batchUrls}
-            onChange={(e) => setBatchUrls(e.target.value)}
-            placeholder="One URL per line, or comma-separated"
-            rows={3}
-            className="input-base w-full resize-none"
-          />
+          <p className="panel-title">Import Local Backup</p>
+          <p className="text-xs text-ctp-subtext1 leading-relaxed">
+            Website Catalog is the default source. Use this only if you already have local `.lua` files.
+          </p>
           <div className="flex justify-end">
-            <button
-              onClick={() => void downloadAndImportBatch()}
-              className="btn-primary"
-            >
-              <Download size={13} />
-              Batch Import URLs
+            <button onClick={() => void importLuaFiles()} className="btn-secondary">
+              <FolderOpen size={13} />
+              Import Local Lua
             </button>
           </div>
         </div>

@@ -29,6 +29,7 @@ const store = new ElectronStore<StoreSchema>({
       steamPath: '',
       githubRepo: 'CozyArio/Octopus-R2',
       autoUpdateCheck: true,
+      catalogScanMinutes: 5,
       dlcTool: 'greenluma',
       nickname: '',
       catppuccinFlavour: 'mocha',
@@ -44,6 +45,7 @@ const defaultSettings: Settings = {
   steamPath: '',
   githubRepo: 'CozyArio/Octopus-R2',
   autoUpdateCheck: true,
+  catalogScanMinutes: 5,
   dlcTool: 'greenluma',
   nickname: '',
   catppuccinFlavour: 'mocha',
@@ -64,6 +66,26 @@ function normalizeSettings(partial: Partial<Settings> | undefined): Settings {
     merged.githubRepo = defaultSettings.githubRepo
   }
   if (!merged.catppuccinFlavour) {
+    merged.catppuccinFlavour = defaultSettings.catppuccinFlavour
+  }
+  if (!Number.isFinite(merged.catalogScanMinutes)) {
+    merged.catalogScanMinutes = defaultSettings.catalogScanMinutes
+  }
+  merged.catalogScanMinutes = Math.min(60, Math.max(1, Math.round(merged.catalogScanMinutes)))
+
+  const allowedFlavours = new Set<Settings['catppuccinFlavour']>([
+    'mocha',
+    'macchiato',
+    'frappe',
+    'latte',
+    'redline',
+    'transgender',
+    'cyberpunk',
+    'hellokitty',
+    'darkreaper',
+    'souless'
+  ])
+  if (!allowedFlavours.has(merged.catppuccinFlavour)) {
     merged.catppuccinFlavour = defaultSettings.catppuccinFlavour
   }
   if (!['greenluma', 'creamapi'].includes(merged.dlcTool)) {
@@ -969,6 +991,8 @@ function registerIpcHandlers(): void {
         ...current,
         ...payload
       })
+      // Keep updater repo locked for safety.
+      next.githubRepo = defaultSettings.githubRepo
 
       const validationError = validateSettingsPayload(next)
       if (validationError) {
