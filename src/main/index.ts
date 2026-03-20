@@ -299,6 +299,22 @@ function dedupeFeedPosts(posts: FeedPost[]): FeedPost[] {
   return Array.from(byId.values()).sort((a, b) => b.createdAt - a.createdAt)
 }
 
+function readLocalChangelog(): string {
+  const candidates = [
+    join(app.getAppPath(), 'CHANGELOG.md'),
+    join(process.cwd(), 'CHANGELOG.md'),
+    join(process.resourcesPath, 'CHANGELOG.md')
+  ]
+
+  for (const path of candidates) {
+    if (existsSync(path)) {
+      return readFileSync(path, 'utf8')
+    }
+  }
+
+  return 'No local changelog file found.'
+}
+
 function parseVersion(version: string): number[] {
   return version.replace(/^v/i, '').split('.').map((item) => Number(item.replace(/\D.*$/, '') || '0'))
 }
@@ -660,6 +676,10 @@ function registerIpcHandlers(): void {
     return ok(true)
   })
 
+  ipcMain.handle(CHANNELS.APP_GET_CHANGELOG, (): IpcResult<{ markdown: string }> => {
+    return ok({ markdown: readLocalChangelog() })
+  })
+
   ipcMain.handle(CHANNELS.FEED_GET, (): IpcResult<FeedPost[]> => {
     const deduped = dedupeFeedPosts(store.get('feed'))
     store.set('feed', deduped)
@@ -830,6 +850,20 @@ function createWindow(): void {
   } else {
     win.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  win.webContents.on('did-finish-load', async () => {
+    const settings = store.get('settings')
+    if (!settings.autoUpdateCheck) return
+
+    try {
+      const result = await checkGithubUpdate(settings.githubRepo)
+      if (result.updateAvailable) {
+        win.webContents.send('app:update-available', result)
+      }
+    } catch {
+      // Silent failure for renderer notification.
+    }
+  })
 }
 
 app.whenReady().then(() => {
@@ -859,6 +893,19 @@ app.whenReady().then(() => {
         // Silent failure for background update check.
       }
     }, 1200)
+
+    // Re-check in background while app is open.
+    setInterval(async () => {
+      try {
+        const result = await checkGithubUpdate(settings.githubRepo)
+        if (!result.updateAvailable) return
+        for (const win of BrowserWindow.getAllWindows()) {
+          win.webContents.send('app:update-available', result)
+        }
+      } catch {
+        // Ignore periodic check failures.
+      }
+    }, 3 * 60 * 60 * 1000)
   }
 
   app.on('activate', () => {

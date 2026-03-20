@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { RefreshCw, DownloadCloud, FileText } from 'lucide-react'
+import { RefreshCw, DownloadCloud, FileText, History, Zap } from 'lucide-react'
 import { CHANNELS } from '../../shared/ipc-channels'
 
 interface UpdateInfo {
@@ -21,9 +21,12 @@ const emptyInfo: UpdateInfo = {
 export default function UpdatesPage(): JSX.Element {
   const [info, setInfo] = useState<UpdateInfo>(emptyInfo)
   const [status, setStatus] = useState('Checking for updates...')
+  const [localChangelog, setLocalChangelog] = useState('Loading local changelog...')
+  const [tab, setTab] = useState<'release' | 'local'>('release')
 
   useEffect(() => {
     void checkUpdates()
+    void loadLocalChangelog()
   }, [])
 
   const checkUpdates = async (): Promise<void> => {
@@ -44,6 +47,15 @@ export default function UpdatesPage(): JSX.Element {
     if (!result.success) {
       setStatus(result.error)
     }
+  }
+
+  const loadLocalChangelog = async (): Promise<void> => {
+    const result = await window.octopus.invoke<{ markdown: string }>(CHANNELS.APP_GET_CHANGELOG)
+    if (!result.success) {
+      setLocalChangelog(result.error)
+      return
+    }
+    setLocalChangelog(result.data.markdown)
   }
 
   return (
@@ -68,11 +80,44 @@ export default function UpdatesPage(): JSX.Element {
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 animate-rise">
+          <button
+            onClick={() => setTab('release')}
+            className={[
+              'rounded-2xl border px-4 py-3 text-left transition-all',
+              tab === 'release'
+                ? 'border-ctp-blue/50 bg-ctp-blue/10'
+                : 'border-ctp-surface1/70 bg-ctp-surface0/35 hover:border-ctp-surface2'
+            ].join(' ')}
+          >
+            <div className="flex items-center gap-2">
+              <Zap size={14} className="text-ctp-blue" />
+              <p className="panel-title">GitHub Release</p>
+            </div>
+            <p className="text-xs text-ctp-subtext1 mt-2">Live notes from latest GitHub release tag.</p>
+          </button>
+          <button
+            onClick={() => setTab('local')}
+            className={[
+              'rounded-2xl border px-4 py-3 text-left transition-all',
+              tab === 'local'
+                ? 'border-ctp-mauve/50 bg-ctp-mauve/10'
+                : 'border-ctp-surface1/70 bg-ctp-surface0/35 hover:border-ctp-surface2'
+            ].join(' ')}
+          >
+            <div className="flex items-center gap-2">
+              <History size={14} className="text-ctp-mauve" />
+              <p className="panel-title">Local Changelog</p>
+            </div>
+            <p className="text-xs text-ctp-subtext1 mt-2">Bundled `CHANGELOG.md` from this app version.</p>
+          </button>
+        </div>
+
         <div className="glass-panel rounded-2xl p-4 animate-rise">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <FileText size={15} className="text-ctp-blue" />
-              <p className="panel-title">Changelog</p>
+              <p className="panel-title">{tab === 'release' ? 'Release Notes' : 'Local Changelog'}</p>
             </div>
             <button
               onClick={() => void openRelease()}
@@ -86,7 +131,9 @@ export default function UpdatesPage(): JSX.Element {
               Update
             </button>
           </div>
-          <p className="text-sm text-ctp-subtext0 leading-relaxed whitespace-pre-wrap mt-3">{info.notes}</p>
+          <p className="text-sm text-ctp-subtext0 leading-relaxed whitespace-pre-wrap mt-3">
+            {tab === 'release' ? info.notes : localChangelog}
+          </p>
         </div>
         <p className="text-xs text-ctp-subtext1">{status}</p>
       </div>

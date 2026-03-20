@@ -18,10 +18,10 @@ const navItems: NavItem[] = [
 
 const navLinkClass = ({ isActive }: { isActive: boolean }): string =>
   [
-    'group flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-semibold transition-all duration-200 select-none',
+    'group flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-semibold transition-all duration-200 select-none relative overflow-hidden',
     isActive
-      ? 'bg-ctp-surface1 text-ctp-text shadow-lg shadow-ctp-crust/20'
-      : 'text-ctp-subtext0 hover:bg-ctp-surface0/85 hover:text-ctp-text'
+      ? 'bg-gradient-to-r from-ctp-surface1 to-ctp-surface0 text-ctp-text shadow-lg shadow-ctp-crust/20'
+      : 'text-ctp-subtext0 hover:bg-ctp-surface0/85 hover:text-ctp-text hover:translate-x-0.5'
   ].join(' ')
 
 export default function Sidebar(): JSX.Element {

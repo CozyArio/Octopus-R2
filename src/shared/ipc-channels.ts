@@ -23,6 +23,7 @@ export const CHANNELS = {
 
   APP_CHECK_UPDATES: 'app:checkUpdates',
   APP_OPEN_RELEASE: 'app:openRelease',
+  APP_GET_CHANGELOG: 'app:getChangelog',
 
   SETTINGS_GET: 'settings:get',
   SETTINGS_GET_AVATAR: 'settings:getAvatar',
