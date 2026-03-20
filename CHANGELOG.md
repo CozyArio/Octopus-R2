@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2 - 2026-03-20
+- Follow-up updater release to validate live version detection flow.
+- Minor Updates page subtitle polish.
+
 ## 0.2.1 - 2026-03-20
 - Added fallback update detection from GitHub `main/package.json` when Release API is unavailable.
 - Added update channel badge on the Updates page.

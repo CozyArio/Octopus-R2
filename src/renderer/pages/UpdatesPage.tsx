@@ -63,7 +63,7 @@ export default function UpdatesPage(): JSX.Element {
       <header className="flex items-center justify-between px-6 py-4 border-b border-ctp-surface1/70 shrink-0 glass-panel">
         <div>
           <h1 className="hero-title">Updates</h1>
-          <p className="hero-subtitle">GitHub release updates and changelog</p>
+          <p className="hero-subtitle">GitHub release updates, fallback repo checks, and changelog</p>
           <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-ctp-yellow/40 bg-ctp-yellow/10 px-2.5 py-1 text-[11px] text-ctp-yellow animate-pop">
             Live update channel enabled
           </div>
