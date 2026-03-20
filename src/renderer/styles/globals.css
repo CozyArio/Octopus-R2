@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: 'Segoe UI Variable Display', 'Trebuchet MS', 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-ctp-surface1 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-ctp-surface2;
+}
+
+::selection {
+  @apply bg-ctp-mauve/30 text-ctp-text;
+}
+
+@layer base {
+  body {
+    @apply bg-ctp-base text-ctp-text;
+    background-image:
+      radial-gradient(circle at 12% -12%, rgba(var(--ctp-blue), 0.28), transparent 36%),
+      radial-gradient(circle at 90% 8%, rgba(var(--ctp-mauve), 0.24), transparent 44%),
+      radial-gradient(circle at 50% 120%, rgba(var(--ctp-teal), 0.14), transparent 38%),
+      linear-gradient(180deg, rgba(var(--ctp-crust), 0.3), rgba(var(--ctp-base), 0.85));
+    animation: ambience-shift 12s ease-in-out infinite alternate;
+  }
+}
+
+@layer components {
+  .page-shell {
+    @apply relative;
+  }
+
+  .page-shell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(120deg, rgba(var(--ctp-surface0), 0.05), transparent 42%);
+    animation: sheen 8s linear infinite;
+  }
+
+  .glass-panel {
+    @apply bg-ctp-mantle/65 backdrop-blur-md border border-ctp-surface1/70 shadow-lg shadow-ctp-crust/20;
+  }
+
+  .input-base {
+    @apply bg-ctp-surface0/90 border border-ctp-surface1 rounded-xl px-3 py-2.5 text-sm text-ctp-text placeholder:text-ctp-subtext0 outline-none focus:border-ctp-mauve/70 transition-all;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-ctp-mauve text-ctp-base text-sm font-semibold hover:bg-ctp-mauve/90 transition-all duration-200 hover:translate-y-[-1px] shadow-md shadow-ctp-mauve/20;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-ctp-surface1 text-ctp-subtext0 text-sm font-semibold hover:border-ctp-surface2 hover:text-ctp-text transition-all duration-200 hover:translate-y-[-1px] bg-ctp-surface0/30;
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-ctp-blue text-ctp-base text-sm font-semibold hover:bg-ctp-blue/90 transition-all duration-200 hover:translate-y-[-1px] shadow-md shadow-ctp-blue/20;
+  }
+
+  .hero-title {
+    @apply text-2xl font-black tracking-tight text-ctp-text;
+  }
+
+  .hero-subtitle {
+    @apply text-sm text-ctp-subtext1 mt-1;
+  }
+
+  .panel-title {
+    @apply text-xs font-bold uppercase tracking-[0.2em] text-ctp-subtext0;
+  }
+}
+
+@layer utilities {
+  .animate-rise {
+    animation: rise-in 380ms ease-out both;
+  }
+
+  .animate-rise-delayed {
+    animation: rise-in 520ms ease-out both;
+  }
+
+  .animate-pop {
+    animation: pop-in 260ms cubic-bezier(0.21, 0.88, 0.31, 1.2) both;
+  }
+
+  .animate-float-soft {
+    animation: float-soft 3.8s ease-in-out infinite;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes ambience-shift {
+  from {
+    filter: saturate(1);
+  }
+  to {
+    filter: saturate(1.08);
+  }
+}
+
+@keyframes sheen {
+  from {
+    transform: translateX(-35%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.18;
+  }
+  40% {
+    opacity: 0;
+  }
+  to {
+    transform: translateX(35%);
+    opacity: 0;
+  }
+}
+
+.ctp-redline {
+  --ctp-rosewater: 255, 177, 184;
+  --ctp-flamingo: 255, 151, 151;
+  --ctp-pink: 255, 133, 168;
+  --ctp-mauve: 255, 108, 108;
+  --ctp-red: 255, 92, 92;
+  --ctp-maroon: 235, 83, 83;
+  --ctp-peach: 255, 144, 102;
+  --ctp-yellow: 255, 213, 120;
+  --ctp-green: 143, 220, 153;
+  --ctp-teal: 124, 219, 211;
+  --ctp-sky: 121, 196, 234;
+  --ctp-sapphire: 110, 171, 225;
+  --ctp-blue: 103, 147, 255;
+  --ctp-lavender: 179, 168, 255;
+  --ctp-text: 243, 228, 232;
+  --ctp-subtext1: 201, 172, 180;
+  --ctp-subtext0: 174, 144, 152;
+  --ctp-overlay2: 136, 107, 116;
+  --ctp-overlay1: 117, 89, 97;
+  --ctp-overlay0: 96, 72, 80;
+  --ctp-surface2: 79, 58, 64;
+  --ctp-surface1: 65, 47, 52;
+  --ctp-surface0: 50, 35, 39;
+  --ctp-base: 30, 20, 24;
+  --ctp-mantle: 23, 15, 18;
+  --ctp-crust: 16, 10, 13;
+}
