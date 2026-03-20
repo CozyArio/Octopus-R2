@@ -358,7 +358,7 @@ function configureAutoUpdaterEvents(repo: string): void {
       updateAvailable: true,
       currentVersion: app.getVersion(),
       latestVersion: info.version ?? app.getVersion(),
-      notes: typeof info.releaseNotes === 'string' ? info.releaseNotes : 'Update available.',
+      notes: normalizeUpdateNotes(typeof info.releaseNotes === 'string' ? info.releaseNotes : 'Update available.'),
       releaseUrl: getReleaseUrlFromRepo(repo),
       canAutoUpdate: true,
       downloaded: downloadedUpdateVersion === info.version
@@ -435,6 +435,29 @@ function isVersionNewer(latest: string, current: string): boolean {
   return false
 }
 
+function normalizeUpdateNotes(input: string | undefined | null): string {
+  const raw = String(input ?? '').trim()
+  if (!raw) return 'No changelog provided.'
+
+  const withNewlines = raw.replace(/\\n/g, '\n')
+  const htmlStripped = withNewlines
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<li>/gi, '- ')
+    .replace(/<\/(ul|ol|p|div|h[1-6])>/gi, '\n')
+    .replace(/<(ul|ol|p|div|h[1-6])[^>]*>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+
+  return htmlStripped
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 async function checkGithubUpdate(repo: string): Promise<UpdateInfoPayload> {
   const currentVersion = app.getVersion()
   const trimmedRepo = repo.trim()
@@ -467,7 +490,7 @@ async function checkGithubUpdate(repo: string): Promise<UpdateInfoPayload> {
         name?: string
       }
       releaseVersion = (data.tag_name || data.name || '').replace(/^v/i, '') || null
-      releaseNotes = data.body || ''
+      releaseNotes = normalizeUpdateNotes(data.body || '')
       releaseUrl = data.html_url || releaseUrl
     }
   } catch {
@@ -487,7 +510,7 @@ async function checkGithubUpdate(repo: string): Promise<UpdateInfoPayload> {
     const changelogUrl = `https://raw.githubusercontent.com/${trimmedRepo}/main/CHANGELOG.md`
     const changelogRes = await fetch(changelogUrl)
     if (changelogRes.ok) {
-      packageNotes = (await changelogRes.text()).slice(0, 4000)
+      packageNotes = normalizeUpdateNotes((await changelogRes.text()).slice(0, 4000))
     }
   } catch {
     // Ignore package/changelog failures and use whatever source is available.
@@ -553,7 +576,7 @@ async function checkForUpdates(repo: string): Promise<UpdateInfoPayload> {
       updateAvailable: isVersionNewer(latestVersion, currentVersion),
       currentVersion,
       latestVersion,
-      notes: releaseNotes,
+      notes: normalizeUpdateNotes(releaseNotes),
       releaseUrl: getReleaseUrlFromRepo(repo),
       canAutoUpdate: true,
       downloaded
