@@ -64,6 +64,9 @@ export default function UpdatesPage(): JSX.Element {
         <div>
           <h1 className="hero-title">Updates</h1>
           <p className="hero-subtitle">GitHub release updates and changelog</p>
+          <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-ctp-yellow/40 bg-ctp-yellow/10 px-2.5 py-1 text-[11px] text-ctp-yellow animate-pop">
+            Live update channel enabled
+          </div>
         </div>
         <button onClick={() => void checkUpdates()} className="btn-secondary">
           <RefreshCw size={14} />

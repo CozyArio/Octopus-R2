@@ -351,37 +351,59 @@ async function checkGithubUpdate(repo: string): Promise<{
     }
   }
 
-  const response = await fetch(`https://api.github.com/repos/${trimmedRepo}/releases/latest`, {
+  const releaseApiUrl = `https://api.github.com/repos/${trimmedRepo}/releases/latest`
+  const response = await fetch(releaseApiUrl, {
     headers: { Accept: 'application/vnd.github+json' }
   })
 
-  if (!response.ok) {
+  if (response.ok) {
+    const data = (await response.json()) as {
+      tag_name?: string
+      body?: string
+      html_url?: string
+      name?: string
+    }
+
+    const latestVersion = (data.tag_name || data.name || currentVersion).replace(/^v/i, '')
+    const notes = data.body || 'No changelog provided.'
+    const releaseUrl = data.html_url || `https://github.com/${trimmedRepo}/releases/latest`
+
+    return {
+      updateAvailable: isVersionNewer(latestVersion, currentVersion),
+      currentVersion,
+      latestVersion,
+      notes,
+      releaseUrl
+    }
+  }
+
+  // Fallback: if releases are missing/private, compare repo package.json on main branch.
+  const packageUrl = `https://raw.githubusercontent.com/${trimmedRepo}/main/package.json`
+  const packageRes = await fetch(packageUrl)
+  if (!packageRes.ok) {
     return {
       updateAvailable: false,
       currentVersion,
       latestVersion: currentVersion,
-      notes: `Unable to fetch releases (${response.status}).`,
-      releaseUrl: ''
+      notes: `Unable to fetch releases (${response.status}) and package fallback (${packageRes.status}).`,
+      releaseUrl: `https://github.com/${trimmedRepo}`
     }
   }
 
-  const data = (await response.json()) as {
-    tag_name?: string
-    body?: string
-    html_url?: string
-    name?: string
-  }
-
-  const latestVersion = (data.tag_name || data.name || currentVersion).replace(/^v/i, '')
-  const notes = data.body || 'No changelog provided.'
-  const releaseUrl = data.html_url || `https://github.com/${trimmedRepo}/releases/latest`
+  const pkg = (await packageRes.json()) as { version?: string }
+  const latestVersion = String(pkg.version ?? currentVersion)
+  const changelogUrl = `https://raw.githubusercontent.com/${trimmedRepo}/main/CHANGELOG.md`
+  const changelogRes = await fetch(changelogUrl)
+  const notes = changelogRes.ok
+    ? (await changelogRes.text()).slice(0, 4000)
+    : 'Fallback update check active. No CHANGELOG.md found on main branch.'
 
   return {
     updateAvailable: isVersionNewer(latestVersion, currentVersion),
     currentVersion,
     latestVersion,
     notes,
-    releaseUrl
+    releaseUrl: `https://github.com/${trimmedRepo}/commits/main`
   }
 }
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1 - 2026-03-20
+- Added fallback update detection from GitHub `main/package.json` when Release API is unavailable.
+- Added update channel badge on the Updates page.
+- Improved reliability of in-app update checks for repos without formal releases.
+
 ## 0.2.0 - 2026-03-20
 - Added global update notice banner triggered by background GitHub release checks.
 - Added `Rebuild Plugin Now` in DLC Manager to regenerate `stplug-in/<AppID>.lua` on demand.
