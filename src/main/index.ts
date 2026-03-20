@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { join, basename } from 'path'
 import { createHash } from 'crypto'
-import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'fs'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'fs'
 import { autoUpdater } from 'electron-updater'
 import * as VDF from 'vdf-parser'
 import ElectronStore = require('electron-store')
@@ -571,6 +571,22 @@ function mergeGames(existingGames: GameEntry[], importedGames: GameEntry[]): Gam
   return Array.from(byAppId.values()).sort((a, b) => b.addedAt - a.addedAt)
 }
 
+function scanSteamToolsPluginGames(steamPath: string): GameEntry[] {
+  const pluginDir = join(steamPath, 'config', 'stplug-in')
+  if (!existsSync(pluginDir)) {
+    return []
+  }
+
+  try {
+    return readdirSync(pluginDir, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith('.lua'))
+      .map((entry) => parseLuaFile(join(pluginDir, entry.name), steamPath))
+      .filter((game): game is GameEntry => game !== null)
+  } catch {
+    return []
+  }
+}
+
 async function downloadAndParseLuaFromUrl(urlText: string): Promise<GameEntry | null> {
   const trimmed = urlText.trim()
   if (!trimmed) return null
@@ -656,9 +672,11 @@ function registerSteamHandlers(): void {
   })
 
   ipcMain.handle(CHANNELS.STEAM_GAMES, (): IpcResult<GameEntry[]> => {
-    const sanitized = store.get('games').map(sanitizeGameName)
-    store.set('games', sanitized)
-    return ok(sanitized)
+    const steamPath = getSteamPath()
+    const pluginGames = scanSteamToolsPluginGames(steamPath)
+    const merged = mergeGames(store.get('games'), pluginGames)
+    store.set('games', merged)
+    return ok(merged)
   })
 
   ipcMain.handle(CHANNELS.STEAM_WEB_CATALOG, async (): Promise<IpcResult<WebCatalogGame[]>> => {
@@ -673,7 +691,7 @@ function registerSteamHandlers(): void {
   ipcMain.handle(CHANNELS.STEAM_SCAN, (): IpcResult<GameEntry[]> => {
     const steamPath = getSteamPath()
     const current = store.get('games')
-    const rescanned = current
+    const rescannedStored = current
       .map((game) => {
         const parsed = parseLuaFile(game.luaPath, steamPath)
         if (parsed) return parsed
@@ -681,6 +699,9 @@ function registerSteamHandlers(): void {
         return sanitizeGameName({ ...game, installed: installState.installed, installPath: installState.installPath })
       })
       .sort((a, b) => b.addedAt - a.addedAt)
+
+    const pluginGames = scanSteamToolsPluginGames(steamPath)
+    const rescanned = mergeGames(rescannedStored, pluginGames)
 
     store.set('games', rescanned)
     return ok(rescanned)
@@ -1105,12 +1126,15 @@ function registerIpcHandlers(): void {
 }
 
 function createWindow(): void {
+  const iconPath = join(app.getAppPath(), 'icons', 'octopus.ico')
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
     minWidth: 960,
     minHeight: 600,
     backgroundColor: '#1e1e2e',
+    icon: existsSync(iconPath) ? iconPath : undefined,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
@@ -1124,6 +1148,9 @@ function createWindow(): void {
   } else {
     win.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  win.setMenuBarVisibility(false)
+  win.removeMenu()
 
   win.webContents.on('did-finish-load', async () => {
     const settings = store.get('settings')

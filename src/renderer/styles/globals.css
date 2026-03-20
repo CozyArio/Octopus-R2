@@ -204,32 +204,34 @@ body,
 }
 
 .ctp-transgender {
-  --ctp-rosewater: 255, 202, 232;
-  --ctp-flamingo: 255, 174, 218;
-  --ctp-pink: 255, 157, 212;
-  --ctp-mauve: 143, 214, 255;
-  --ctp-red: 255, 132, 178;
-  --ctp-maroon: 255, 118, 166;
-  --ctp-peach: 255, 188, 206;
-  --ctp-yellow: 255, 232, 189;
-  --ctp-green: 164, 236, 210;
-  --ctp-teal: 126, 224, 228;
-  --ctp-sky: 126, 214, 255;
-  --ctp-sapphire: 121, 197, 255;
-  --ctp-blue: 111, 180, 255;
-  --ctp-lavender: 202, 198, 255;
-  --ctp-text: 234, 241, 255;
-  --ctp-subtext1: 182, 193, 219;
-  --ctp-subtext0: 152, 165, 195;
-  --ctp-overlay2: 128, 140, 170;
-  --ctp-overlay1: 109, 120, 148;
-  --ctp-overlay0: 89, 98, 123;
-  --ctp-surface2: 72, 80, 103;
-  --ctp-surface1: 56, 63, 84;
-  --ctp-surface0: 42, 48, 67;
-  --ctp-base: 26, 30, 46;
-  --ctp-mantle: 21, 24, 38;
-  --ctp-crust: 16, 19, 31;
+  /* Strict trans flag palette only:
+     blue #5BCEFA, light pink #F5A9B8, white #FFFFFF */
+  --ctp-rosewater: 245, 169, 184;
+  --ctp-flamingo: 245, 169, 184;
+  --ctp-pink: 245, 169, 184;
+  --ctp-mauve: 91, 206, 250;
+  --ctp-red: 245, 169, 184;
+  --ctp-maroon: 245, 169, 184;
+  --ctp-peach: 255, 255, 255;
+  --ctp-yellow: 255, 255, 255;
+  --ctp-green: 91, 206, 250;
+  --ctp-teal: 91, 206, 250;
+  --ctp-sky: 91, 206, 250;
+  --ctp-sapphire: 91, 206, 250;
+  --ctp-blue: 91, 206, 250;
+  --ctp-lavender: 255, 255, 255;
+  --ctp-text: 91, 206, 250;
+  --ctp-subtext1: 91, 206, 250;
+  --ctp-subtext0: 91, 206, 250;
+  --ctp-overlay2: 245, 169, 184;
+  --ctp-overlay1: 245, 169, 184;
+  --ctp-overlay0: 245, 169, 184;
+  --ctp-surface2: 255, 255, 255;
+  --ctp-surface1: 255, 255, 255;
+  --ctp-surface0: 245, 169, 184;
+  --ctp-base: 255, 255, 255;
+  --ctp-mantle: 255, 255, 255;
+  --ctp-crust: 245, 169, 184;
 }
 
 .ctp-cyberpunk {

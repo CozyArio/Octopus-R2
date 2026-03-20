@@ -1,6 +1,6 @@
 {
   "name": "octopus-r2",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Private game tools suite for a friend group",
   "author": "CozyArio",
   "main": "out/main/index.js",
@@ -49,10 +49,12 @@
     },
     "files": [
       "out/**/*",
+      "icons/**/*",
       "package.json",
       "CHANGELOG.md"
     ],
     "win": {
+      "icon": "icons/octopus.ico",
       "target": [
         "nsis",
         "portable"
