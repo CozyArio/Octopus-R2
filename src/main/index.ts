@@ -471,7 +471,7 @@ async function checkGithubUpdate(repo: string): Promise<UpdateInfoPayload> {
 
   const chosenUrl = releaseIsNewerThanPackage
     ? releaseUrl
-    : `https://github.com/${trimmedRepo}/commits/main`
+    : `https://github.com/${trimmedRepo}/releases/latest`
 
   return {
     updateAvailable: isVersionNewer(chosenVersion, currentVersion),

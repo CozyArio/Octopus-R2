@@ -230,6 +230,11 @@ export default function UpdatesPage(): JSX.Element {
           </p>
         </div>
         <p className="text-xs text-ctp-subtext1">{status}</p>
+        {!info.canAutoUpdate && info.updateAvailable && (
+          <p className="text-xs text-ctp-yellow/90">
+            Auto-install requires release assets (`latest.yml` + setup files) uploaded to GitHub Releases.
+          </p>
+        )}
       </div>
     </div>
   )

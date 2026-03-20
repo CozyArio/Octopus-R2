@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.8 - 2026-03-20
+- `Update Now` fallback now always opens GitHub Releases instead of repo/commits pages.
+- Added `dist:publish` script to build and upload updater assets to GitHub Releases in one command.
+- Added in-app hint when auto-install is unavailable due to missing release assets.
+
 ## 0.2.7 - 2026-03-20
 - Added direct Website Catalog integration from `manifestkitkat.netlify.app/data/catalog.json`.
 - New in-app website catalog search and one-click `Add Game` import flow.
