@@ -40,18 +40,35 @@ export default function LibraryPage(): JSX.Element {
   }, [catalogScanMinutes, catalogGames])
 
   const installedCount = useMemo(() => games.filter((game) => game.installed).length, [games])
+  const catalogNameByAppId = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const item of catalogGames) {
+      map.set(item.appId, item.gameName)
+    }
+    return map
+  }, [catalogGames])
+  const isSteamToolsLuaPath = (luaPath: string): boolean =>
+    luaPath.replace(/\\/g, '/').toLowerCase().includes('/steam/config/stplug-in/')
+  const resolveGameDisplayName = (game: GameEntry): string => {
+    const raw = game.name?.trim() ?? ''
+    if (!raw || raw === game.appId || /^app\s+\d+$/i.test(raw)) {
+      return catalogNameByAppId.get(game.appId) || `App ${game.appId}`
+    }
+    return raw
+  }
   const visibleGames = useMemo(() => {
     const query = search.trim().toLowerCase()
     return games.filter((game) => {
       if (onlyInstalled && !game.installed) return false
+      const displayName = resolveGameDisplayName(game).toLowerCase()
       if (!query) return true
       return (
-        game.name.toLowerCase().includes(query) ||
+        displayName.includes(query) ||
         game.appId.toLowerCase().includes(query) ||
         game.luaPath.toLowerCase().includes(query)
       )
     })
-  }, [games, onlyInstalled, search])
+  }, [games, onlyInstalled, search, catalogNameByAppId])
   const visibleCatalogGames = useMemo(() => {
     const query = catalogSearch.trim().toLowerCase()
     return catalogGames.filter((item) => {
@@ -145,6 +162,7 @@ export default function LibraryPage(): JSX.Element {
     }
 
     setStatusMessage(`Added to SteamTools: ${result.data.targetDir}`)
+    await loadGames()
   }
 
   const addVisibleToSteamTools = async (): Promise<void> => {
@@ -155,6 +173,7 @@ export default function LibraryPage(): JSX.Element {
 
     let success = 0
     for (const game of visibleGames) {
+      if (isSteamToolsLuaPath(game.luaPath)) continue
       const result = await window.octopus.invoke<{ copied: number; targetDir: string }>(CHANNELS.STEAM_ADD_TOOLS, {
         appId: game.appId
       })
@@ -327,40 +346,48 @@ export default function LibraryPage(): JSX.Element {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {visibleGames.map((game, index) => (
-              <article
-                key={game.appId}
-                className="rounded-2xl border border-ctp-surface1/80 bg-ctp-mantle/70 px-4 py-3 space-y-1.5 animate-rise hover:border-ctp-surface2 transition-all duration-200 hover:-translate-y-0.5"
-                style={{ animationDelay: `${Math.min(index * 40, 240)}ms` }}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-sm font-semibold text-ctp-text truncate">{game.name}</h2>
-                  <span
-                    className={[
-                      'text-[10px] px-2 py-0.5 rounded-full border',
-                      game.installed
-                        ? 'bg-ctp-green/10 text-ctp-green border-ctp-green/20'
-                        : 'bg-ctp-surface0 text-ctp-subtext0 border-ctp-surface1'
-                    ].join(' ')}
-                  >
-                    {game.installed ? 'Installed' : 'Not installed'}
-                  </span>
-                </div>
-                <p className="text-xs text-ctp-subtext1">AppID: {game.appId}</p>
-                <p className="text-[11px] text-ctp-subtext1 truncate" title={game.luaPath}>
-                  Lua: {game.luaPath}
-                </p>
-                <div className="pt-1">
-                  <button
-                    onClick={() => void addToSteamTools(game.appId)}
-                    className="btn-secondary"
-                  >
-                    <Upload size={12} />
-                    Add to SteamTools
-                  </button>
-                </div>
-              </article>
-            ))}
+            {visibleGames.map((game, index) => {
+              const inSteamTools = isSteamToolsLuaPath(game.luaPath)
+              const displayName = resolveGameDisplayName(game)
+              return (
+                <article
+                  key={game.appId}
+                  className="rounded-2xl border border-ctp-surface1/80 bg-ctp-mantle/70 px-4 py-3 space-y-1.5 animate-rise hover:border-ctp-surface2 transition-all duration-200 hover:-translate-y-0.5"
+                  style={{ animationDelay: `${Math.min(index * 40, 240)}ms` }}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="text-sm font-semibold text-ctp-text truncate">{displayName}</h2>
+                    <span
+                      className={[
+                        'text-[10px] px-2 py-0.5 rounded-full border',
+                        game.installed
+                          ? 'bg-ctp-green/10 text-ctp-green border-ctp-green/20'
+                          : 'bg-ctp-surface0 text-ctp-subtext0 border-ctp-surface1'
+                      ].join(' ')}
+                    >
+                      {game.installed ? 'Installed' : 'Not installed'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-ctp-subtext1">AppID: {game.appId}</p>
+                  <p className="text-[11px] text-ctp-subtext1 truncate" title={game.luaPath}>
+                    Lua: {game.luaPath}
+                  </p>
+                  <div className="pt-1">
+                    <button
+                      onClick={() => void addToSteamTools(game.appId)}
+                      disabled={inSteamTools}
+                      className={[
+                        'btn-secondary',
+                        inSteamTools ? 'opacity-60 cursor-not-allowed hover:translate-y-0' : ''
+                      ].join(' ')}
+                    >
+                      <Upload size={12} />
+                      {inSteamTools ? 'Added' : 'Add to SteamTools'}
+                    </button>
+                  </div>
+                </article>
+              )
+            })}
           </div>
         )}
       </div>

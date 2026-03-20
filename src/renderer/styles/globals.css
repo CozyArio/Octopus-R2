@@ -204,8 +204,8 @@ body,
 }
 
 .ctp-transgender {
-  /* Strict trans flag palette only:
-     blue #5BCEFA, light pink #F5A9B8, white #FFFFFF */
+  /* Dark trans theme:
+     accents use #5BCEFA, #F5A9B8, #FFFFFF with dark backgrounds for readability */
   --ctp-rosewater: 245, 169, 184;
   --ctp-flamingo: 245, 169, 184;
   --ctp-pink: 245, 169, 184;
@@ -220,18 +220,18 @@ body,
   --ctp-sapphire: 91, 206, 250;
   --ctp-blue: 91, 206, 250;
   --ctp-lavender: 255, 255, 255;
-  --ctp-text: 91, 206, 250;
-  --ctp-subtext1: 91, 206, 250;
-  --ctp-subtext0: 91, 206, 250;
-  --ctp-overlay2: 245, 169, 184;
-  --ctp-overlay1: 245, 169, 184;
-  --ctp-overlay0: 245, 169, 184;
-  --ctp-surface2: 255, 255, 255;
-  --ctp-surface1: 255, 255, 255;
-  --ctp-surface0: 245, 169, 184;
-  --ctp-base: 255, 255, 255;
-  --ctp-mantle: 255, 255, 255;
-  --ctp-crust: 245, 169, 184;
+  --ctp-text: 236, 242, 255;
+  --ctp-subtext1: 182, 194, 222;
+  --ctp-subtext0: 150, 162, 191;
+  --ctp-overlay2: 120, 130, 158;
+  --ctp-overlay1: 97, 107, 133;
+  --ctp-overlay0: 77, 87, 112;
+  --ctp-surface2: 62, 71, 95;
+  --ctp-surface1: 47, 56, 78;
+  --ctp-surface0: 35, 43, 63;
+  --ctp-base: 22, 26, 40;
+  --ctp-mantle: 18, 22, 34;
+  --ctp-crust: 13, 16, 27;
 }
 
 .ctp-cyberpunk {
