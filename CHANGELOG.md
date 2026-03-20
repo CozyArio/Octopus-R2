@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.9 - 2026-03-20
+- Added new `Discord` tab with join prompt and one-click invite open flow.
+- Added safe external URL opening IPC channel for approved hosts (Discord/GitHub).
+
 ## 0.2.8 - 2026-03-20
 - `Update Now` fallback now always opens GitHub Releases instead of repo/commits pages.
 - Added `dist:publish` script to build and upload updater assets to GitHub Releases in one command.

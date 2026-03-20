@@ -26,6 +26,7 @@ export const CHANNELS = {
   APP_DOWNLOAD_UPDATE: 'app:downloadUpdate',
   APP_INSTALL_UPDATE: 'app:installUpdate',
   APP_OPEN_RELEASE: 'app:openRelease',
+  APP_OPEN_EXTERNAL: 'app:openExternal',
   APP_GET_CHANGELOG: 'app:getChangelog',
 
   SETTINGS_GET: 'settings:get',

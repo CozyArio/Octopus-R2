@@ -6,6 +6,7 @@ import LibraryPage from './pages/LibraryPage'
 import DLCPage from './pages/DLCPage'
 import SettingsPage from './pages/SettingsPage'
 import UpdatesPage from './pages/UpdatesPage'
+import DiscordPage from './pages/DiscordPage'
 
 interface UpdateNotice {
   updateAvailable: boolean
@@ -62,6 +63,7 @@ export default function App(): JSX.Element {
             <Route path="/library" element={<LibraryPage />} />
             <Route path="/dlc" element={<DLCPage />} />
             <Route path="/updates" element={<UpdatesPage />} />
+            <Route path="/discord" element={<DiscordPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </main>

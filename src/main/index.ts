@@ -384,6 +384,18 @@ function readLocalChangelog(): string {
   return 'No local changelog file found.'
 }
 
+function isAllowedExternalHost(hostname: string): boolean {
+  const normalized = hostname.toLowerCase()
+  return (
+    normalized === 'github.com' ||
+    normalized === 'www.github.com' ||
+    normalized === 'discord.gg' ||
+    normalized === 'www.discord.gg' ||
+    normalized === 'discord.com' ||
+    normalized === 'www.discord.com'
+  )
+}
+
 function parseVersion(version: string): number[] {
   return version.replace(/^v/i, '').split('.').map((item) => Number(item.replace(/\D.*$/, '') || '0'))
 }
@@ -889,6 +901,25 @@ function registerIpcHandlers(): void {
 
     if (parsed.protocol !== 'https:' || parsed.hostname !== 'github.com') {
       return fail('Only https://github.com release links are allowed.')
+    }
+
+    await shell.openExternal(url)
+    return ok(true)
+  })
+
+  ipcMain.handle(CHANNELS.APP_OPEN_EXTERNAL, async (_event, payload: { url?: string }): Promise<IpcResult<boolean>> => {
+    const url = payload?.url?.trim() ?? ''
+    if (!url) return fail('Missing URL.')
+
+    let parsed: URL
+    try {
+      parsed = new URL(url)
+    } catch {
+      return fail('Invalid URL.')
+    }
+
+    if (parsed.protocol !== 'https:' || !isAllowedExternalHost(parsed.hostname)) {
+      return fail('Only approved https links are allowed.')
     }
 
     await shell.openExternal(url)
