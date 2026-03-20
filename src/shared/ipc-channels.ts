@@ -6,6 +6,7 @@ export const CHANNELS = {
   STEAM_DOWNLOAD_LUA_BATCH: 'steam:downloadLuaBatch',
   STEAM_CLEAR_LIBRARY: 'steam:clearLibrary',
   STEAM_ADD_TOOLS: 'steam:addToSteamTools',
+  STEAM_WEB_CATALOG: 'steam:webCatalog',
   STEAM_REMOVE: 'steam:remove',
   STEAM_IS_RUNNING: 'steam:isRunning',
   STEAM_DETECT_PATH: 'steam:detectPath',

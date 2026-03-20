@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Library, RefreshCw, FolderOpen, Download, Link2, Trash2, Upload, Search, Sparkles } from 'lucide-react'
+import { Library, RefreshCw, FolderOpen, Download, Link2, Trash2, Upload, Search, Sparkles, Globe2, Plus } from 'lucide-react'
 import { CHANNELS } from '../../shared/ipc-channels'
-import type { GameEntry } from '../../shared/types'
+import type { GameEntry, WebCatalogGame } from '../../shared/types'
 
 const defaultManifestUrl =
   'https://manifestkitkat.netlify.app/files/307690_Sleeping%20Dogs%20Definitive%20Edition.lua'
@@ -13,9 +13,13 @@ export default function LibraryPage(): JSX.Element {
   const [batchUrls, setBatchUrls] = useState(`${defaultManifestUrl}\n`)
   const [search, setSearch] = useState('')
   const [onlyInstalled, setOnlyInstalled] = useState(false)
+  const [catalogGames, setCatalogGames] = useState<WebCatalogGame[]>([])
+  const [catalogSearch, setCatalogSearch] = useState('')
+  const [catalogLoading, setCatalogLoading] = useState(false)
 
   useEffect(() => {
     void loadGames()
+    void loadWebsiteCatalog()
   }, [])
 
   const installedCount = useMemo(() => games.filter((game) => game.installed).length, [games])
@@ -31,6 +35,14 @@ export default function LibraryPage(): JSX.Element {
       )
     })
   }, [games, onlyInstalled, search])
+  const visibleCatalogGames = useMemo(() => {
+    const query = catalogSearch.trim().toLowerCase()
+    return catalogGames.filter((item) => {
+      if (!query) return true
+      return [item.gameName, item.appId, item.fileName].join(' ').toLowerCase().includes(query)
+    })
+  }, [catalogGames, catalogSearch])
+  const libraryAppIds = useMemo(() => new Set(games.map((game) => game.appId)), [games])
 
   const loadGames = async (): Promise<void> => {
     const result = await window.octopus.invoke<GameEntry[]>(CHANNELS.STEAM_GAMES)
@@ -40,6 +52,19 @@ export default function LibraryPage(): JSX.Element {
     }
 
     setGames(result.data)
+  }
+
+  const loadWebsiteCatalog = async (): Promise<void> => {
+    setCatalogLoading(true)
+    const result = await window.octopus.invoke<WebCatalogGame[]>(CHANNELS.STEAM_WEB_CATALOG)
+    if (!result.success) {
+      setCatalogLoading(false)
+      setStatusMessage(result.error)
+      return
+    }
+
+    setCatalogGames(result.data)
+    setCatalogLoading(false)
   }
 
   const importLuaFiles = async (): Promise<void> => {
@@ -142,6 +167,19 @@ export default function LibraryPage(): JSX.Element {
     setStatusMessage(`Added ${success}/${visibleGames.length} visible games to SteamTools.`)
   }
 
+  const addGameFromWebsite = async (item: WebCatalogGame): Promise<void> => {
+    const result = await window.octopus.invoke<{ games: GameEntry[]; imported: number }>(CHANNELS.STEAM_DOWNLOAD_LUA, {
+      url: item.downloadUrl
+    })
+    if (!result.success) {
+      setStatusMessage(`Failed to add ${item.gameName}: ${result.error}`)
+      return
+    }
+
+    setGames(result.data.games)
+    setStatusMessage(`Added ${item.gameName} from website catalog.`)
+  }
+
   return (
     <div className="flex flex-col h-full bg-ctp-base page-shell">
       <header className="flex items-center justify-between px-6 py-4 border-b border-ctp-surface1/70 shrink-0 glass-panel">
@@ -176,6 +214,7 @@ export default function LibraryPage(): JSX.Element {
           <Chip label={`${games.length} games`} />
           <Chip label={`${visibleGames.length} visible`} />
           <Chip label={`${installedCount} installed`} color="green" />
+          <Chip label={`${catalogGames.length} website`} />
         </div>
         <p className="text-xs text-ctp-subtext1">{statusMessage}</p>
       </div>
@@ -204,7 +243,56 @@ export default function LibraryPage(): JSX.Element {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr] gap-3 px-6 py-3 border-b border-ctp-surface1/50 shrink-0">
+      <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr_1fr] gap-3 px-6 py-3 border-b border-ctp-surface1/50 shrink-0">
+        <div className="glass-panel rounded-2xl p-4 space-y-3 animate-rise">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Globe2 size={14} className="text-ctp-blue" />
+              <p className="panel-title">Website Catalog</p>
+            </div>
+            <button onClick={() => void loadWebsiteCatalog()} className="btn-secondary" disabled={catalogLoading}>
+              <RefreshCw size={13} />
+              {catalogLoading ? 'Loading...' : 'Refresh'}
+            </button>
+          </div>
+
+          <input
+            type="text"
+            value={catalogSearch}
+            onChange={(e) => setCatalogSearch(e.target.value)}
+            placeholder="Search website games..."
+            className="input-base w-full"
+          />
+
+          <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
+            {visibleCatalogGames.slice(0, 100).map((item) => (
+              <article
+                key={item.appId}
+                className="rounded-xl border border-ctp-surface1/80 bg-ctp-surface0/45 px-3 py-2 flex items-center justify-between gap-2"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-ctp-text truncate">{item.gameName}</p>
+                  <p className="text-[11px] text-ctp-subtext1 truncate">AppID: {item.appId}</p>
+                </div>
+                <button
+                  onClick={() => void addGameFromWebsite(item)}
+                  disabled={libraryAppIds.has(item.appId)}
+                  className={[
+                    'btn-accent text-xs px-3 py-1.5',
+                    libraryAppIds.has(item.appId) ? 'opacity-60 cursor-not-allowed hover:translate-y-0' : ''
+                  ].join(' ')}
+                >
+                  <Plus size={12} />
+                  {libraryAppIds.has(item.appId) ? 'Added' : 'Add Game'}
+                </button>
+              </article>
+            ))}
+            {visibleCatalogGames.length === 0 && (
+              <p className="text-xs text-ctp-subtext1">No website games matched your search.</p>
+            )}
+          </div>
+        </div>
+
         <div className="glass-panel rounded-2xl p-4 space-y-2 animate-rise">
           <p className="panel-title">Single URL Import</p>
           <div className="flex gap-2">

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.7 - 2026-03-20
+- Added direct Website Catalog integration from `manifestkitkat.netlify.app/data/catalog.json`.
+- New in-app website catalog search and one-click `Add Game` import flow.
+- Added `steam:webCatalog` IPC endpoint with AppID-based dedupe and normalized download URLs.
+
 ## 0.2.6 - 2026-03-20
 - Unified updater UX with a single `Update Now` button (no more confusing `Open GitHub` wording).
 - Top update banner now also uses `Update Now` for consistency.

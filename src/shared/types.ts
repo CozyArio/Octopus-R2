@@ -9,6 +9,16 @@ export interface GameEntry {
   luaPath: string
 }
 
+export interface WebCatalogGame {
+  appId: string
+  gameName: string
+  fileName: string
+  downloadUrl: string
+  updatedAt: string
+  gameSize?: string
+  thumbnailUrl?: string
+}
+
 export interface DLCEntry {
   dlcId: string
   name: string

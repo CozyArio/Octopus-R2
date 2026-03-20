@@ -6,7 +6,7 @@ import { autoUpdater } from 'electron-updater'
 import * as VDF from 'vdf-parser'
 import ElectronStore = require('electron-store')
 import { CHANNELS } from '../shared/ipc-channels'
-import type { DLCEntry, FeedPost, GameEntry, IpcResult, Settings, StoreSchema } from '../shared/types'
+import type { DLCEntry, FeedPost, GameEntry, IpcResult, Settings, StoreSchema, WebCatalogGame } from '../shared/types'
 
 interface UpdateInfoPayload {
   updateAvailable: boolean
@@ -20,6 +20,8 @@ interface UpdateInfoPayload {
 
 let autoUpdaterConfigured = false
 let downloadedUpdateVersion: string | null = null
+const MANIFEST_SITE_BASE = 'https://manifestkitkat.netlify.app/'
+const MANIFEST_CATALOG_URL = `${MANIFEST_SITE_BASE}data/catalog.json`
 
 const store = new ElectronStore<StoreSchema>({
   defaults: {
@@ -568,6 +570,49 @@ async function downloadAndParseLuaFromUrl(urlText: string): Promise<GameEntry | 
   return parseLuaFile(targetPath, getSteamPath())
 }
 
+async function fetchWebCatalog(): Promise<WebCatalogGame[]> {
+  const response = await fetch(MANIFEST_CATALOG_URL)
+  if (!response.ok) {
+    throw new Error(`Failed to load website catalog (${response.status}).`)
+  }
+
+  const payload = (await response.json()) as { items?: unknown[] }
+  const items = Array.isArray(payload.items) ? payload.items : []
+
+  const byAppId = new Map<string, WebCatalogGame>()
+  for (const raw of items) {
+    if (!raw || typeof raw !== 'object') continue
+    const item = raw as Record<string, unknown>
+    const downloadPath = String(item.downloadPath ?? '').trim()
+    const fileName = String(item.fileName ?? '').trim()
+    if (!downloadPath && !fileName) continue
+
+    const resolvedDownloadUrl = new URL(downloadPath || `files/${encodeURIComponent(fileName)}`, MANIFEST_SITE_BASE).toString()
+    const appIdFromField = String(item.appId ?? '').trim()
+    const appIdFromFile = fileName.match(/^(\d{3,})/)?.[1] ?? ''
+    const appId = appIdFromField || appIdFromFile
+    if (!appId) continue
+
+    const gameName = String(item.gameName ?? '').trim() || getNameFromFilename(fileName || `${appId}.lua`)
+    const nextEntry: WebCatalogGame = {
+      appId,
+      gameName,
+      fileName: fileName || `${appId}_${gameName}.lua`,
+      downloadUrl: resolvedDownloadUrl,
+      updatedAt: String(item.updatedAt ?? ''),
+      gameSize: String(item.gameSize ?? '').trim() || undefined,
+      thumbnailUrl: String(item.thumbnailUrl ?? '').trim() || undefined
+    }
+
+    const existing = byAppId.get(appId)
+    if (!existing || nextEntry.updatedAt > existing.updatedAt) {
+      byAppId.set(appId, nextEntry)
+    }
+  }
+
+  return Array.from(byAppId.values()).sort((a, b) => a.gameName.localeCompare(b.gameName))
+}
+
 function registerSteamHandlers(): void {
   ipcMain.handle(CHANNELS.STEAM_DETECT_PATH, (): IpcResult<{ steamPath: string }> => {
     const steamPath = detectSteamPath()
@@ -580,6 +625,15 @@ function registerSteamHandlers(): void {
     const sanitized = store.get('games').map(sanitizeGameName)
     store.set('games', sanitized)
     return ok(sanitized)
+  })
+
+  ipcMain.handle(CHANNELS.STEAM_WEB_CATALOG, async (): Promise<IpcResult<WebCatalogGame[]>> => {
+    try {
+      return ok(await fetchWebCatalog())
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch website catalog.'
+      return fail(message)
+    }
   })
 
   ipcMain.handle(CHANNELS.STEAM_SCAN, (): IpcResult<GameEntry[]> => {
