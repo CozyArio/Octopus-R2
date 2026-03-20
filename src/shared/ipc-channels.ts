@@ -22,6 +22,8 @@ export const CHANNELS = {
   FEED_PUSH: 'feed:push',
 
   APP_CHECK_UPDATES: 'app:checkUpdates',
+  APP_DOWNLOAD_UPDATE: 'app:downloadUpdate',
+  APP_INSTALL_UPDATE: 'app:installUpdate',
   APP_OPEN_RELEASE: 'app:openRelease',
   APP_GET_CHANGELOG: 'app:getChangelog',
 

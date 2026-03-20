@@ -2,10 +2,24 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { join, basename } from 'path'
 import { createHash } from 'crypto'
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'fs'
+import { autoUpdater } from 'electron-updater'
 import * as VDF from 'vdf-parser'
 import ElectronStore = require('electron-store')
 import { CHANNELS } from '../shared/ipc-channels'
 import type { DLCEntry, FeedPost, GameEntry, IpcResult, Settings, StoreSchema } from '../shared/types'
+
+interface UpdateInfoPayload {
+  updateAvailable: boolean
+  currentVersion: string
+  latestVersion: string
+  notes: string
+  releaseUrl: string
+  canAutoUpdate: boolean
+  downloaded?: boolean
+}
+
+let autoUpdaterConfigured = false
+let downloadedUpdateVersion: string | null = null
 
 const store = new ElectronStore<StoreSchema>({
   defaults: {
@@ -299,6 +313,59 @@ function dedupeFeedPosts(posts: FeedPost[]): FeedPost[] {
   return Array.from(byId.values()).sort((a, b) => b.createdAt - a.createdAt)
 }
 
+function broadcastToWindows(channel: string, payload: unknown): void {
+  for (const win of BrowserWindow.getAllWindows()) {
+    win.webContents.send(channel, payload)
+  }
+}
+
+function getReleaseUrlFromRepo(repo: string): string {
+  return `https://github.com/${repo.trim()}/releases/latest`
+}
+
+function configureAutoUpdaterEvents(repo: string): void {
+  if (autoUpdaterConfigured) return
+
+  autoUpdater.autoDownload = false
+  autoUpdater.autoInstallOnAppQuit = false
+
+  autoUpdater.on('update-available', (info) => {
+    broadcastToWindows('app:update-available', {
+      updateAvailable: true,
+      currentVersion: app.getVersion(),
+      latestVersion: info.version ?? app.getVersion(),
+      notes: typeof info.releaseNotes === 'string' ? info.releaseNotes : 'Update available.',
+      releaseUrl: getReleaseUrlFromRepo(repo),
+      canAutoUpdate: true,
+      downloaded: downloadedUpdateVersion === info.version
+    } satisfies UpdateInfoPayload)
+  })
+
+  autoUpdater.on('download-progress', (progress) => {
+    broadcastToWindows('app:update-download-progress', {
+      percent: progress.percent ?? 0,
+      transferred: progress.transferred ?? 0,
+      total: progress.total ?? 0,
+      bytesPerSecond: progress.bytesPerSecond ?? 0
+    })
+  })
+
+  autoUpdater.on('update-downloaded', (info) => {
+    downloadedUpdateVersion = info.version ?? app.getVersion()
+    broadcastToWindows('app:update-downloaded', {
+      version: downloadedUpdateVersion
+    })
+  })
+
+  autoUpdater.on('error', (error) => {
+    broadcastToWindows('app:update-error', {
+      message: error?.message ?? 'Unknown auto-updater error.'
+    })
+  })
+
+  autoUpdaterConfigured = true
+}
+
 function readLocalChangelog(): string {
   const candidates = [
     join(app.getAppPath(), 'CHANGELOG.md'),
@@ -332,13 +399,7 @@ function isVersionNewer(latest: string, current: string): boolean {
   return false
 }
 
-async function checkGithubUpdate(repo: string): Promise<{
-  updateAvailable: boolean
-  currentVersion: string
-  latestVersion: string
-  notes: string
-  releaseUrl: string
-}> {
+async function checkGithubUpdate(repo: string): Promise<UpdateInfoPayload> {
   const currentVersion = app.getVersion()
   const trimmedRepo = repo.trim()
   if (!/^[^/]+\/[^/]+$/.test(trimmedRepo)) {
@@ -347,7 +408,8 @@ async function checkGithubUpdate(repo: string): Promise<{
       currentVersion,
       latestVersion: currentVersion,
       notes: 'Invalid GitHub repo format. Use owner/repo.',
-      releaseUrl: ''
+      releaseUrl: '',
+      canAutoUpdate: false
     }
   }
 
@@ -373,7 +435,8 @@ async function checkGithubUpdate(repo: string): Promise<{
       currentVersion,
       latestVersion,
       notes,
-      releaseUrl
+      releaseUrl,
+      canAutoUpdate: false
     }
   }
 
@@ -386,7 +449,8 @@ async function checkGithubUpdate(repo: string): Promise<{
       currentVersion,
       latestVersion: currentVersion,
       notes: `Unable to fetch releases (${response.status}) and package fallback (${packageRes.status}).`,
-      releaseUrl: `https://github.com/${trimmedRepo}`
+      releaseUrl: `https://github.com/${trimmedRepo}`,
+      canAutoUpdate: false
     }
   }
 
@@ -403,7 +467,55 @@ async function checkGithubUpdate(repo: string): Promise<{
     currentVersion,
     latestVersion,
     notes,
-    releaseUrl: `https://github.com/${trimmedRepo}/commits/main`
+    releaseUrl: `https://github.com/${trimmedRepo}/commits/main`,
+    canAutoUpdate: false
+  }
+}
+
+async function checkForUpdates(repo: string): Promise<UpdateInfoPayload> {
+  if (!app.isPackaged) {
+    return checkGithubUpdate(repo)
+  }
+
+  configureAutoUpdaterEvents(repo)
+  const currentVersion = app.getVersion()
+
+  try {
+    const result = await autoUpdater.checkForUpdates()
+    const updateInfo = result?.updateInfo
+    if (!updateInfo) {
+      return {
+        updateAvailable: false,
+        currentVersion,
+        latestVersion: currentVersion,
+        notes: 'No update metadata found.',
+        releaseUrl: getReleaseUrlFromRepo(repo),
+        canAutoUpdate: true,
+        downloaded: false
+      }
+    }
+
+    const latestVersion = updateInfo.version ?? currentVersion
+    const releaseNotes =
+      typeof updateInfo.releaseNotes === 'string'
+        ? updateInfo.releaseNotes
+        : Array.isArray(updateInfo.releaseNotes)
+          ? updateInfo.releaseNotes.map((item) => item.note).join('\n\n')
+          : 'No changelog provided.'
+    const downloaded = downloadedUpdateVersion === latestVersion
+
+    return {
+      updateAvailable: isVersionNewer(latestVersion, currentVersion),
+      currentVersion,
+      latestVersion,
+      notes: releaseNotes,
+      releaseUrl: getReleaseUrlFromRepo(repo),
+      canAutoUpdate: true,
+      downloaded
+    }
+  } catch {
+    // If native check fails (misconfigured feed), keep fallback check alive.
+    return checkGithubUpdate(repo)
   }
 }
 
@@ -660,24 +772,46 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle(
     CHANNELS.APP_CHECK_UPDATES,
-    async (): Promise<
-      IpcResult<{
-        updateAvailable: boolean
-        currentVersion: string
-        latestVersion: string
-        notes: string
-        releaseUrl: string
-      }>
-    > => {
+    async (): Promise<IpcResult<UpdateInfoPayload>> => {
       const settings = store.get('settings')
       try {
-        return ok(await checkGithubUpdate(settings.githubRepo))
+        return ok(await checkForUpdates(settings.githubRepo))
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown update error.'
         return fail(message)
       }
     }
   )
+
+  ipcMain.handle(CHANNELS.APP_DOWNLOAD_UPDATE, async (): Promise<IpcResult<{ started: boolean }>> => {
+    const settings = store.get('settings')
+    if (!app.isPackaged) {
+      return fail('Automatic download works in packaged builds only.')
+    }
+
+    try {
+      configureAutoUpdaterEvents(settings.githubRepo)
+      await autoUpdater.downloadUpdate()
+      return ok({ started: true })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to download update.'
+      return fail(message)
+    }
+  })
+
+  ipcMain.handle(CHANNELS.APP_INSTALL_UPDATE, (): IpcResult<{ installing: boolean }> => {
+    if (!app.isPackaged) {
+      return fail('Automatic install works in packaged builds only.')
+    }
+    if (!downloadedUpdateVersion) {
+      return fail('No downloaded update is ready to install.')
+    }
+
+    setImmediate(() => {
+      autoUpdater.quitAndInstall()
+    })
+    return ok({ installing: true })
+  })
 
   ipcMain.handle(CHANNELS.APP_OPEN_RELEASE, async (_event, payload: { url?: string }): Promise<IpcResult<boolean>> => {
     const url = payload?.url?.trim() ?? ''
@@ -878,7 +1012,7 @@ function createWindow(): void {
     if (!settings.autoUpdateCheck) return
 
     try {
-      const result = await checkGithubUpdate(settings.githubRepo)
+      const result = await checkForUpdates(settings.githubRepo)
       if (result.updateAvailable) {
         win.webContents.send('app:update-available', result)
       }
@@ -896,21 +1030,7 @@ app.whenReady().then(() => {
   if (settings.autoUpdateCheck) {
     setTimeout(async () => {
       try {
-        const result = await checkGithubUpdate(settings.githubRepo)
-        if (!result.updateAvailable) return
-        await dialog.showMessageBox({
-          type: 'info',
-          title: 'Update Available',
-          message: `Version ${result.latestVersion} is available (current ${result.currentVersion}).`,
-          detail: 'Open GitHub releases to download the latest build?',
-          buttons: ['Open Releases', 'Later'],
-          defaultId: 0,
-          cancelId: 1
-        }).then(async (choice) => {
-          if (choice.response === 0) {
-            await shell.openExternal(result.releaseUrl)
-          }
-        })
+        await checkForUpdates(settings.githubRepo)
       } catch {
         // Silent failure for background update check.
       }
@@ -919,7 +1039,7 @@ app.whenReady().then(() => {
     // Re-check in background while app is open.
     setInterval(async () => {
       try {
-        const result = await checkGithubUpdate(settings.githubRepo)
+        const result = await checkForUpdates(settings.githubRepo)
         if (!result.updateAvailable) return
         for (const win of BrowserWindow.getAllWindows()) {
           win.webContents.send('app:update-available', result)

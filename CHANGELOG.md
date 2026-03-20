@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3 - 2026-03-20
+- Added real in-app updater flow for packaged builds (check, download, progress, install/restart).
+- Added updater IPC actions: download update and install update.
+- Updates page now shows download progress and install button after update is ready.
+- Added Electron Builder packaging scripts and GitHub publish metadata.
+
 ## 0.2.2 - 2026-03-20
 - Follow-up updater release to validate live version detection flow.
 - Minor Updates page subtitle polish.

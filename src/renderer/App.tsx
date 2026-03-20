@@ -6,7 +6,6 @@ import LibraryPage from './pages/LibraryPage'
 import DLCPage from './pages/DLCPage'
 import SettingsPage from './pages/SettingsPage'
 import UpdatesPage from './pages/UpdatesPage'
-import { CHANNELS } from '../shared/ipc-channels'
 
 interface UpdateNotice {
   updateAvailable: boolean
@@ -14,6 +13,7 @@ interface UpdateNotice {
   latestVersion: string
   notes: string
   releaseUrl: string
+  canAutoUpdate: boolean
 }
 
 export default function App(): JSX.Element {
@@ -29,9 +29,8 @@ export default function App(): JSX.Element {
     return () => unsub()
   }, [])
 
-  const openRelease = async (): Promise<void> => {
-    if (!updateNotice?.releaseUrl) return
-    await window.octopus.invoke<boolean>(CHANNELS.APP_OPEN_RELEASE, { url: updateNotice.releaseUrl })
+  const openUpdater = (): void => {
+    window.location.hash = '/updates'
   }
 
   return (
@@ -46,8 +45,8 @@ export default function App(): JSX.Element {
               <p className="text-ctp-text font-semibold">Update {updateNotice.latestVersion} available</p>
               <p className="text-ctp-subtext1">Current {updateNotice.currentVersion}</p>
             </div>
-            <button onClick={() => void openRelease()} className="btn-primary text-xs px-3 py-1.5">
-              Update
+            <button onClick={() => openUpdater()} className="btn-primary text-xs px-3 py-1.5">
+              Open Updater
             </button>
             <button onClick={() => setUpdateNotice(null)} className="btn-secondary text-xs px-3 py-1.5">
               Dismiss
