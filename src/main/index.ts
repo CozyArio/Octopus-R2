@@ -190,6 +190,10 @@ function getNameFromFilename(luaPath: string): string {
   return cleaned || raw
 }
 
+function isSteamToolsPluginPath(luaPath: string): boolean {
+  return luaPath.replace(/\\/g, '/').toLowerCase().includes('/steam/config/stplug-in/')
+}
+
 function looksLikeHashName(name: string): boolean {
   return /^[a-f0-9]{24,}$/i.test(name.trim())
 }
@@ -227,6 +231,7 @@ function parseLuaFile(luaPath: string, steamPath: string): GameEntry | null {
   const appId = appIdMatch[1]
   const addedAt = statSync(luaPath).mtimeMs
   const installState = getInstalledState(appId, steamPath)
+  const inSteamToolsPlugin = isSteamToolsPluginPath(luaPath)
   const filenameName = getNameFromFilename(luaPath)
   const rawName = nameMatch?.[1]?.trim() || filenameName || `App ${appId}`
   const name = /^[a-f0-9]{32,}$/i.test(rawName) ? filenameName : rawName
@@ -235,7 +240,7 @@ function parseLuaFile(luaPath: string, steamPath: string): GameEntry | null {
     appId,
     name,
     installPath: installState.installPath,
-    installed: installState.installed,
+    installed: installState.installed || inSteamToolsPlugin,
     addedAt,
     luaPath
   }
@@ -719,7 +724,12 @@ function registerSteamHandlers(): void {
         const parsed = parseLuaFile(game.luaPath, steamPath)
         if (parsed) return parsed
         const installState = getInstalledState(game.appId, steamPath)
-        return sanitizeGameName({ ...game, installed: installState.installed, installPath: installState.installPath })
+        const inSteamToolsPlugin = isSteamToolsPluginPath(game.luaPath)
+        return sanitizeGameName({
+          ...game,
+          installed: installState.installed || inSteamToolsPlugin,
+          installPath: installState.installPath
+        })
       })
       .sort((a, b) => b.addedAt - a.addedAt)
 
