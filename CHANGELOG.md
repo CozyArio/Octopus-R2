@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1 - 2026-03-20
+- Update flow is now one-click for auto-updater builds: `Update Now` downloads and installs automatically.
+- DLC Manager now shows a clear "Work in progress" page instead of broken controls.
+
 ## 0.3.0 - 2026-03-20
 - Switched release automation to a local CLI flow (`npm run release:local`) to avoid GitHub Actions approvals.
 - Added `scripts/release-local.ps1` to push branch/tag and publish updater assets in one command.

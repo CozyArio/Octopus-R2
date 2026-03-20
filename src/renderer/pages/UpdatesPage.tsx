@@ -29,6 +29,7 @@ export default function UpdatesPage(): JSX.Element {
   const [tab, setTab] = useState<'release' | 'local'>('release')
   const [downloadPercent, setDownloadPercent] = useState(0)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [autoInstallOnDownload, setAutoInstallOnDownload] = useState(false)
 
   useEffect(() => {
     void checkUpdates()
@@ -47,7 +48,13 @@ export default function UpdatesPage(): JSX.Element {
       setIsDownloading(false)
       setDownloadPercent(100)
       setInfo((current) => ({ ...current, downloaded: true }))
-      setStatus(`Update ${data?.version ?? info.latestVersion} downloaded. Click Install & Restart.`)
+      if (autoInstallOnDownload) {
+        setStatus(`Update ${data?.version ?? info.latestVersion} downloaded. Installing now...`)
+        setAutoInstallOnDownload(false)
+        void installUpdate()
+      } else {
+        setStatus(`Update ${data?.version ?? info.latestVersion} downloaded. Click Install & Restart.`)
+      }
     })
 
     const unsubError = window.octopus.on('app:update-error', (payload: unknown) => {
@@ -61,7 +68,7 @@ export default function UpdatesPage(): JSX.Element {
       unsubDownloaded()
       unsubError()
     }
-  }, [])
+  }, [autoInstallOnDownload, info.latestVersion])
 
   const checkUpdates = async (): Promise<void> => {
     setStatus('Checking for updates...')
@@ -113,6 +120,7 @@ export default function UpdatesPage(): JSX.Element {
         await installUpdate()
         return
       }
+      setAutoInstallOnDownload(true)
       await downloadUpdate()
       return
     }
